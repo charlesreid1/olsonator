@@ -48,8 +48,7 @@ from the NCAA API, Kenpom, Sagarin, and others.
 Many Bothans died to bring us these names.
 
 That directory also contains latitude/longitude data
-about each team's home city, which (if game is not at
-neutral site) tells us which team traveled how far from home.
+about each team's home city. 
 
 This can be used to determine east coast/west coast teams,
 which can be used to account for travel effects.
