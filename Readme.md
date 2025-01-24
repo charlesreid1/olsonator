@@ -48,10 +48,9 @@ from the NCAA API, Kenpom, Sagarin, and others.
 Many Bothans died to bring us these names.
 
 That directory also contains latitude/longitude data
-about each team's home city. 
-
-This can be used to determine east coast/west coast teams,
-which can be used to account for travel effects.
+about each team's home city. That can be used to determine
+distances traveled and account for travel and time zone
+effects.
 
 
 ### Rankings
@@ -69,13 +68,13 @@ offensive output for each team (and a score).
 Different sites offer different rankings for these quantities:
 
 * <https://teamrankings.com>:
-    * [offensive efficiency](https://www.teamrankings.com/ncaa-basketball/stat/offensive-efficiency/) for year, last 10, last 3, home, away, etc.
-    * [defensive efficiency](https://www.teamrankings.com/ncaa-basketball/stat/defensive-efficiency) 
-    * [possessions per game](https://www.teamrankings.com/ncaa-basketball/stat/possessions-per-game), same as tempo 
-    * can also obtain historical snapshots for doing backtesting of prior years
+    * [Offensive efficiency](https://www.teamrankings.com/ncaa-basketball/stat/offensive-efficiency/) for year, last 10, last 3, home, away, etc.
+    * [Defensive efficiency](https://www.teamrankings.com/ncaa-basketball/stat/defensive-efficiency) 
+    * [Possessions per game](https://www.teamrankings.com/ncaa-basketball/stat/possessions-per-game), same as tempo 
+    * Can also obtain historical snapshots for doing backtesting of prior years
 
 * TODO: <https://kenpom.com>:
-    * offers an adjusted offensive/defensive efficiency, and tempo
-    * the catch: this data is updated each day, historical snapshots are not possible
-    * these values are only used if the model is predicting a game within 90 days
+    * Offers an adjusted offensive/defensive efficiency, and tempo
+    * The catch: this data is updated each day, historical snapshots are not possible
+    * These values are only useful if the model is predicting a game within ~90 days
 
