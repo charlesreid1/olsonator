@@ -1,3 +1,6 @@
+import os
+import json
+
 from .utils import assert_required_keys_present
 from .errors import ModelParameterException, ModelPredictException
 
@@ -56,12 +59,45 @@ class NCAABModel(ModelBase):
     """
     Define a class for an NCAAB basketball game.
     """
-    def predict(self, game_parameters):
+    def _get_fpath_json(self, prefix, stamp):
+        """
+        Get the filename + path of the JSON file containing
+        team raning data
+        
+        prefix should be a stat name (like tempo)
+        stamp should be a YYYYMMDD datestamp
+        """
+        fname = prefix + "_" + stamp + ".json"
+        trpath = os.path.join(self.model_parameters['data_directory'], 'teamrankings')
+        jdatadir = os.path.join(trpath, 'json')
+        fpath = os.path.join(jdatadir, fname)
+        return fpath
 
+    def predict(self, game_parameters):
         try:
             assert_required_keys_present(game_parameters, self.required_game_params)
         except KeyError:
             msg = f"Error: missing a required key in game inputs: {self.required_game_params}"
             raise ModelPredictException(msg)
+
+        game_descr = game_parameters['away_team'] + " @ " + game_parameters['home_team']
+        game_date = game_parameters['game_date'].replace("-", "")
+
+        print(f"Generating prediction for {game_descr}")
+
+        # Load tempo, off_eff, def_eff
+        with open(self._get_fpath_json("tempo", game_date), 'r') as f:
+            tempo_json = json.load(f)
+        with open(self._get_fpath_json("off_eff", game_date), 'r') as f:
+            off_json = json.load(f)
+        with open(self._get_fpath_json("def_eff", game_date), 'r') as f:
+            def_json = json.load(f)
+
+        # Might 
+        import pdb; pdb.set_trace()
+        a=0
+
+
+
 
 
