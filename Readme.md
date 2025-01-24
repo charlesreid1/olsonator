@@ -1,5 +1,7 @@
 # olsonator
 
+![Lute Olson](img/olson.jpg)
+
 This library contains a model for NCAA basketball,
 tools to obtain the data the model needs via web scraping,
 and tools to back-test the model against past games
