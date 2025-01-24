@@ -46,19 +46,10 @@ def backtest():
     model_params = {'data_directory': DATADIR}
     model = NCAABModel(model_params)
 
-    basic_game = {
-        'game_date': '2025-01-11', 
-        'game_time': '0900 PST', 
-        'home_team': 'Duke Blue Devils', 
-        'away_team': 'Notre Dame Fighting Irish', 
-        'neutral_site': False
-    }
-    model.predict(basic_game)
-
-    ## # Run a backtest for a single team
-    ## backtester = Backtester(model=model, start_date="2025-01-18", end_date="2025-01-22", team="Arizona")
-    ## backtester.prepare()
-    ## backtester.backtest(test_name="backtest_arizona")
+    # Run a backtest for a single team
+    backtester = Backtester(model, start_date="2025-01-18", end_date="2025-01-22", team="Arizona")
+    backtester.prepare()
+    backtester.backtest(test_name="backtest_arizona")
 
     ## # Run a backtest for all teams
     ## backtester = Backtester(model=model, start_date="2025-01-21", end_date="2025-01-22")

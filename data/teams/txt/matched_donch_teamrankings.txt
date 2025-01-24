@@ -1,0 +1,416 @@
+Abilene Christian Wildcats | Abl Christian 
+Air Force Falcons | Air Force 
+Akron Zips | Akron 
+Alabama A&M Bulldogs | Alab A&M 
+Alabama Crimson Tide | Alabama 
+Alabama State Hornets | Alabama St 
+Albany Great Danes | Albany 
+Alcorn State Braves | Alcorn St 
+American University Eagles | American 
+App State Mountaineers | App State 
+Appalachian State Mountaineers | App State  
+Arizona State Sun Devils | Arizona St 
+Arizona Wildcats | Arizona 
+Ark.-Pine Bluff Golden Lions | Ark Pine Bl 
+Arkansas Razorbacks | Arkansas 
+Arkansas State Red Wolves | Arkansas St 
+Arkansas-Pine Bluff Golden Lions | Ark Pine Bl  
+Army Black Knights | Army 
+Auburn Tigers | Auburn 
+Austin Peay Governors | Austin Peay 
+BYU Cougars | BYU 
+Ball State Cardinals | Ball St 
+Baylor Bears | Baylor 
+Bellarmine Knights | Bellarmine 
+Belmont Bruins | Belmont 
+Bethune Cookman Wildcats | Beth-Cook 
+Binghamton Bearcats | Binghamton 
+Boise State Broncos | Boise St 
+Boston College Eagles | Boston Col 
+Boston University Terriers | Boston U 
+Bowling Green Falcons | Bowling Grn 
+Bradley Braves | Bradley 
+Bradley University Braves | Bradley
+Brigham Young Cougars | BYU
+Brown Bears | Brown 
+Bryant Bulldogs | Bryant 
+Bucknell Bison | Bucknell 
+Buffalo Bulls | Buffalo 
+Butler Bulldogs | Butler 
+CS Fullerton Titans | CS Fullerton 
+CSU Bakersfield Roadrunners | CS Bakersfld 
+Cal Poly Mustangs | Cal Poly 
+Cal State Fullerton Titans | Cal Poly
+Cal State Northridge Matadors | Cal St Nrdge 
+California Baptist Lancers | Cal Baptist 
+California Golden Bears | California 
+Campbell Fighting Camels | Campbell 
+Canisius Golden Griffins | Canisius 
+Central Arkansas Bears | Central Ark 
+Central Connecticut Blue Devils | Central Conn 
+Central Michigan Chippewas | Central Mich 
+Charleston Cougars | Col Charlestn 
+Charleston Southern Buccaneers | Charl South 
+Charlotte 49ers | Charlotte 
+Chattanooga Mocs | Chattanooga 
+Chicago State Cougars | Chicago St 
+Cincinnati Bearcats | Cincinnati 
+Clemson Tigers | Clemson 
+Cleveland State Vikings | Cleveland St 
+Coastal Carolina Chanticleers | Coastal Car 
+Colgate Raiders | Colgate 
+Colorado Buffaloes | Colorado 
+Colorado State Rams | Colorado St 
+Columbia Lions | Columbia 
+Connecticut Huskies | Connecticut 
+Coppin State Eagles | Coppin St 
+Cornell Big Red | Cornell 
+Creighton Bluejays | Creighton 
+Dartmouth Big Green | Dartmouth 
+Davidson Wildcats | Davidson 
+Dayton Flyers | Dayton 
+DePaul Blue Demons | DePaul 
+Delaware Blue Hens | Delaware 
+Delaware Fightin' Blue Hens | Delaware 
+Delaware State Hornets | Delaware St 
+Denver Pioneers | Denver 
+Detroit Mercy Titans | Detroit 
+Detroit Titans | Detroit
+Drake Bulldogs | Drake 
+Drexel Dragons | Drexel 
+Duke Blue Devils | Duke 
+Duquesne Dukes | Duquesne 
+ETSU Buccaneer | E Tenn St 
+East Carolina Pirates | E Carolina 
+East Tennessee State Buccaneers | E Tenn St 
+East Texas A&M Lions | 
+Eastern Illinois Panthers | E Illinois 
+Eastern Kentucky Colonels | E Kentucky 
+Eastern Michigan Eagles | E Michigan 
+Eastern Washington Eagles | E Washingtn 
+Elon Phoenix | Elon 
+Evansville Purple Aces | Evansville 
+FIU Golden Panthers | Florida Intl 
+Fairfield Stags | Fairfield 
+Fairleigh Dickinson Knights | F Dickinson 
+Florida A&M Rattlers | Florida A&M 
+Florida Atlantic | Fla Atlantic 
+Florida Gators | Florida 
+Florida Gulf Coast Eagles | Fla Gulf Cst 
+Florida International Panthers | Florida Intl
+Florida State Seminoles | Florida St 
+Fordham Rams | Fordham 
+Fresno State Bulldogs | Fresno St 
+Furman Paladins | Furman 
+Gardner Webb Runnin' Bulldogs | Gard-Webb 
+Gardner-Webb Runnin' Bulldogs | Gard-Webb 
+George Mason Patriots | Geo Mason 
+George Washington Revolutionaries | Geo Wshgtn 
+Georgetown Hoyas | Georgetown 
+Georgia Bulldogs | Georgia 
+Georgia Southern Eagles | GA Southern 
+Georgia State Panthers | Georgia St 
+Georgia Tech Yellow Jackets | GA Tech 
+Gonzaga Bulldogs | Gonzaga 
+Grambling State Tigers | Grambling St 
+Grambling Tigers | Grambling St 
+Grand Canyon Antelopes | Grd Canyon 
+Grand Canyon Lopes | Grd Canyon 
+Green Bay Phoenix | 
+Hampton Pirates | Hampton 
+Harvard Crimson | Harvard
+Hawaii Rainbow Warriors | Hawaii 
+High Point Panthers | High Point 
+Hofstra Pride | Hofstra 
+Holy Cross Crusaders | Holy Cross 
+Houston Christian Huskies | Hsn Christian 
+Houston Cougars | Houston
+Howard Bison | Howard 
+IU Indianapolis Jaguars | IU Indy 
+IUPUI Jaguars | IU Indy  
+Idaho State Bengals | Idaho St 
+Idaho Vandals | Idaho 
+Illinois Fighting Illini | Illinois 
+Illinois State Redbirds | Illinois St 
+Incarnate Word Cardinals | Incar Word 
+Indiana Hoosiers | Indiana 
+Indiana State Sycamores | Indiana St 
+Iona Gaels | Iona 
+Iowa Hawkeyes | Iowa 
+Iowa State Cyclones | Iowa St 
+Jackson State Tigers | Jackson St 
+Jacksonville Dolphins | Jacksonville 
+Jacksonville State Gamecocks | Jksnville St 
+James Madison Dukes | James Mad 
+Kansas City Roos | Kansas City 
+Kansas Jayhawks | Kansas 
+Kansas State Wildcats | Kansas St 
+Kennesaw State Owls | Kennesaw St 
+Kent State Golden Flashes | Kent St 
+Kentucky Wildcats | Kentucky 
+LIU Sharks | LIU 
+LSU Tigers | LSU 
+La Salle Explorers | La Salle 
+Lafayette Leopards | Lafayette 
+Lamar Cardinals | Lamar 
+Le Moyne Dolphins | Le Moyne 
+Lehigh Mountain Hawks | Lehigh 
+Liberty Flames | Liberty 
+Lindenwood Lions | Lindenwood 
+Lipscomb Bison | Lipscomb 
+Little Rock Trojans | AR Lit Rock 
+Long Beach State 49ers | Lg Beach St 
+Long Beach State Beach | Lg Beach St 
+Long Island University Sharks | LIU
+Longwood Lancers | Longwood 
+Louisiana Lafayette | Louisiana 
+Louisiana Monroe Warhawks | UL Monroe 
+Louisiana Tech Bulldogs | LA Tech 
+Louisville Cardinals | Louisville 
+Loyola Chicago Ramblers | Loyola-Chi 
+Loyola Maryland Greyhounds | Loyola-MD 
+Loyola Marymount Lions | Loyola Mymt 
+MD E Shore Fighting Hawks | Maryland ES 
+MS Valley State Delta Devils | Miss Val St 
+MTSU Blue Raiders | Middle Tenn 
+Maine Black Bears | Maine 
+Manhattan Jaspers | Manhattan 
+Marist Red Foxes | Marist 
+Marquette Golden Eagles | Marquette 
+Marshall Thundering Herd | Marshall 
+Maryland Eastern Shore Hawks | Maryland ES
+Maryland Terrapins | Maryland 
+Massachusetts Minutemen | U Mass 
+McNeese Cowboys | McNeese St 
+McNeese State Cowboys | McNeese St 
+Md.-Eastern Shore(UMES) | Maryland ES
+Memphis Tigers | Memphis 
+Mercer Bears | Mercer 
+Mercyhurst Lakers | Mercyhurst 
+Merrimack Warriors | Merrimack 
+Miami (FL) Hurricanes | Miami 
+Miami (OH) RedHawks | Miami (OH) 
+Miami Hurricanes | Miami
+Miami RedHawks | Miami (OH)
+Miami-Florida Hurricanes | Miami
+Miami-Ohio RedHawks | Miami (OH)
+Michigan State Spartans | Michigan St 
+Michigan Wolverines | Michigan 
+Middle Tennessee Blue Raiders | Middle Tenn
+Milwaukee Panthers | 
+Minnesota Golden Gophers | Minnesota 
+Mississippi State Bulldogs | Miss State 
+Mississippi Valley State Delta Devils | Miss Val St  
+Missouri State Bears | Missouri St 
+Missouri Tigers | Missouri 
+Monmouth Hawks | Monmouth 
+Monmouth-NJ Hawks | Monmouth 
+Montana Grizzlies | Montana 
+Montana State Bobcats | Montana St 
+Morehead State Eagles | Morehead St 
+Morgan State Bears | Morgan St 
+Mount St. Mary's Mountaineers | Mt St Marys  
+Murray State Racers | Murray St 
+NC A&T Aggies | NC A&T 
+NC State Wolfpack | NC State 
+NJIT Highlanders | NJIT 
+Navy Midshipmen | Navy 
+Nebraska Cornhuskers | Nebraska 
+Nevada Wolf Pack | Nevada 
+New Hampshire Wildcats | N Hampshire 
+New Mexico Lobos | New Mexico 
+New Mexico State Aggies | N Mex State 
+New Orleans Privateers | New Orleans 
+Niagara Purple Eagles | Niagara 
+Nicholls Colonels | Nicholls 
+Nicholls State Colonels | Nicholls 
+Norfolk State Spartans | Norfolk St 
+North Alabama Lions | N Alabama 
+North Carolina A&T Aggies | NC A&T
+North Carolina Central Eagles | NC Central 
+North Carolina Tar Heels | N Carolina 
+North Dakota Fighting Hawks | North Dakota 
+North Dakota State Bison | N Dakota St 
+North Florida Ospreys | N Florida 
+North Texas Mean Green | North Texas 
+Northeastern Huskies | Northeastrn 
+Northern Arizona Lumberjacks | N Arizona 
+Northern Colorado Bears | N Colorado 
+Northern Illinois Huskies | N Illinois 
+Northern Iowa Panthers | N Iowa 
+Northern Kentucky Norse | N Kentucky 
+Northwestern State Demons | NW State
+Northwestern Wildcats | Northwestern 
+Notre Dame Fighting Irish | Notre Dame 
+Oakland Golden Grizzlies | Oakland 
+Ohio Bobcats | Ohio 
+Ohio State Buckeyes | Ohio St 
+Oklahoma Sooners | Oklahoma 
+Oklahoma State Cowboys | Oklahoma St 
+Old Dominion Monarchs | Old Dominion 
+Ole Miss Rebels | Mississippi 
+Omaha Mavericks | Neb Omaha 
+Omaha(Neb.-Omaha) Mavericks | Neb Omaha 
+Oral Roberts Golden Eagles | Oral Roberts 
+Oregon Ducks | Oregon 
+Oregon State Beavers | Oregon St 
+Pacific Tigers | Pacific 
+Penn Quakers | 
+Penn State Nittany Lions | Penn St 
+Pennsylvania Quakers | U Penn 
+Pepperdine Waves | Pepperdine 
+Pitt Panthers | Pittsburgh 
+Pittsburgh Panthers | Pittsburgh 
+Portland Pilots | Portland 
+Portland State Vikings | Portland St 
+Prairie View A&M Panthers | Prairie View 
+Presbyterian Blue Hose | Presbyterian 
+Princeton Tigers | Princeton 
+Providence Friars | Providence 
+Purdue Boilermakers | Purdue 
+Purdue Fort Wayne Mastodons | IPFW 
+Queens Royals | Queens 
+Queens University Royals | Queens 
+Quinnipiac Bobcats | Quinnipiac 
+Radford Highlanders | Radford 
+Rhode Island Rams | Rhode Island 
+Rice Owls | Rice 
+Richmond Spiders | Richmond 
+Rider Broncs | Rider 
+Robert Morris Colonials | Rob Morris 
+Rutgers Scarlet Knights | Rutgers 
+SC State Bulldogs | S Car State 
+SE Louisiana Lions | SE Louisiana 
+SE Missouri State Redhawks | SE Missouri 
+SIU Edwardsville Cougars | SIU Edward 
+SMU Mustangs | S Methodist 
+Sacramento State Hornets | Sac State 
+Sacred Heart Pioneers | Sacred Hrt 
+Saint Joseph's Hawks | St Josephs 
+Saint Louis Billikens | Saint Louis 
+Saint Mary's College Gaels | St Marys 
+Saint Mary's Gaels | St Marys 
+Saint Peter's Peacocks | St Peters 
+Sam Houston Bearkats | Sam Hous St 
+Sam Houston State Bearkats | Sam Hous St 
+Samford Bulldogs | Samford 
+San Diego State Aztecs | San Diego St 
+San Diego Toreros | San Diego 
+San Francisco Dons | San Francisco 
+San Jose State Spartans | San Jose St 
+San José State Spartans | San Jose St 
+Santa Clara Broncos | Santa Clara 
+Seattle Redhawks | Seattle 
+Seattle U Redhawks | Seattle 
+Seton Hall Pirates | Seton Hall 
+Siena Saints | Siena 
+Skyhawks | Stonehill  
+South Alabama Jaguars | S Alabama 
+South Carolina Gamecocks | S Carolina 
+South Carolina State Bulldogs | 
+South Carolina Upstate Spartans | SC Upstate 
+South Dakota Coyotes | South Dakota 
+South Dakota State Jackrabbits | S Dakota St 
+South Florida Bulls | S Florida 
+Southeastern Louisiana Lions | 
+Southern Illinois Salukis | S Illinois 
+Southern Indiana Screaming Eagles | S Indiana 
+Southern Jaguars | Southern
+Southern Miss Golden Eagles | S Mississippi 
+Southern University Jaguars | Southern
+Southern Utah Thunderbirds | S Utah 
+St. Bonaventure Bonnies | St Bonavent 
+St. Francis (PA) Red Flash | St Fran (PA) 
+St. Francis Red Flash | St Fran (PA) 
+St. John's Red Storm | St Johns 
+St. Thomas Tommies | St. Thomas 
+St. Thomas-Minnesota Tommies | St. Thomas 
+Stanford Cardinal | Stanford 
+Stephen F. Austin Lumberjacks | Ste F Austin 
+Stetson Hatters | Stetson 
+Stonehill Skyhawks | Stonehill 
+Stony Brook Seawolves | Stony Brook 
+Syracuse Orange | Syracuse 
+TCU Horned Frogs | TX Christian 
+Tarleton State Texans | Tarleton St 
+Temple Owls | Temple 
+Tennessee State Tigers | TN State 
+Tennessee Tech Golden Eagles | TN Tech 
+Tennessee Volunteers | Tennessee 
+Tennessee-Martin Skyhawks | TN Martin 
+Texas A&M Aggies | Texas A&M 
+Texas A&M CC Islanders | TX A&M-CC 
+Texas A&M-Corpus Christi Islanders | TX A&M-CC 
+Texas Longhorns | Texas 
+Texas Southern Tigers | TX Southern 
+Texas State Bobcats | Texas St 
+Texas Tech Red Raiders | Texas Tech 
+The Citadel Bulldogs | Citadel 
+Toledo Rockets | Toledo 
+Towson Tigers | Towson 
+Troy Trojans | Troy 
+Tulane Green Wave | Tulane 
+Tulsa Golden Hurricane | Tulsa 
+UAB Blazers | UAB 
+UC Davis Aggies | UC Davis 
+UC Irvine Anteaters | UC Irvine 
+UC Riverside Highlanders | UC Riverside 
+UC San Diego Tritons | UCSD 
+UC Santa Barbara Gauchos | UCSB 
+UCF Knights | UCF 
+UCLA Bruins | UCLA 
+UConn Huskies | Connecticut
+UIC Flames | IL-Chicago 
+UMBC Retrievers | Maryland BC 
+UMass Lowell River Hawks | Mass Lowell 
+UMass Minutemen | U Mass 
+UNC Asheville Bulldogs | NC-Asheville 
+UNC Greensboro Spartans | NC-Grnsboro 
+UNC Tar Heels | N Carolina
+UNC Wilmington Seahawks | NC-Wilmgton 
+UNLV Rebels | UNLV 
+USC Trojans | USC 
+USC Upstate Spartans | 
+UT Arlington Mavericks | TX-Arlington 
+UT Martin Skyhawks | 
+UT Rio Grande Valley Vaqueros | 
+UTEP Miners | TX El Paso 
+UTRGV Vaqueros | 
+UTSA Roadrunners | UTSA 
+Utah State Aggies | Utah St 
+Utah Tech Trailblazers | Utah Tech 
+Utah Utes | Utah 
+Utah Valley Wolverines | Utah Valley 
+VCU Rams | VCU 
+VCU(Va. Commonwealth) Rams | VCU 
+VMI Keydets | VMI
+Valparaiso Beacons | Valparaiso 
+Vanderbilt Commodores | Vanderbilt 
+Vermont Catamounts | Vermont 
+Villanova Wildcats | Villanova 
+Virginia Cavaliers | Virginia 
+Virginia Tech Hokies | VA Tech 
+Wagner Seahawks | Wagner 
+Wake Forest Demon Deacons | Wake Forest 
+Washington Huskies | Washington 
+Washington State Cougars | Wash State 
+Weber State Wildcats | Weber St 
+West Georgia Wolves | W Georgia 
+West Virginia Mountaineers | W Virginia 
+Western Carolina Catamounts | W Carolina 
+Western Illinois Leathernecks | W Illinois 
+Western Kentucky Hilltoppers | W Kentucky 
+Western Michigan Broncos | W Michigan 
+Wichita State Shockers | Wichita St 
+William & Mary Tribe | Wm & Mary 
+Winthrop Eagles | Winthrop 
+Wisconsin Badgers | Wisconsin 
+Wisconsin Green Bay Phoenix | WI-Grn Bay 
+Wisconsin Milwaukee Panthers | WI-Milwkee 
+Wofford Terriers | Wofford 
+Wright State Raiders | Wright St 
+Wyoming Cowboys | Wyoming 
+Xavier Musketeers | Xavier 
+Xavier-Ohio Musketeers | Xavier 
+Yale Bulldogs | Yale 
+Youngstown State Penguins | Youngs St 
