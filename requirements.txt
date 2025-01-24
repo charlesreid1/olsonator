@@ -1,0 +1,4 @@
+selenium==4.27
+BeautifulSoup4
+rapidfuzz
+webdriver
