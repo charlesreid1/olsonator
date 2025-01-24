@@ -57,5 +57,5 @@ dump_matches('matched_donch_teamrankings.txt', 'donch2teamrankings.json', 'teamr
 dump_list('matched_donch_sag.txt',          'rev', 'sag.json')
 dump_list('matched_donch_kenpom.txt',       'rev', 'kenpom.json')
 dump_list('matched_donch_teamrankings.txt', 'rev', 'teamrankings.json')
-dump_list('matched_donch_kenpom.txt',       'rev', 'donch.json')
+dump_list('matched_donch_kenpom.txt',       'fwd', 'donch.json')
 
