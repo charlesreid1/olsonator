@@ -8,3 +8,9 @@ class ModelPredictException(Exception):
 
 class TeamRankingTableNotFoundException(Exception):
     pass
+
+
+class TeamNotFoundException(Exception):
+    pass
+
+
