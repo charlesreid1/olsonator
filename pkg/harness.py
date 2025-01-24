@@ -57,14 +57,11 @@ class TeamRankingsDataFetcher(object):
         self.model_parameters = model_parameters
         self.trdir = os.path.join(self.model_parameters['data_directory'], 'teamrankings')
         self.jdatadir = os.path.join(self.trdir, 'json')
-        self.hdatadir = os.path.join(self.trdir, 'html')
 
         if not os.path.exists(self.trdir):
             os.mkdir(self.trdir)
         if not os.path.exists(self.jdatadir):
             os.mkdir(self.jdatadir)
-        if not os.path.exists(self.hdatadir):
-            os.mkdir(self.hdatadir)
 
     def _get_fpath_json(self, prefix, stamp):
         """
