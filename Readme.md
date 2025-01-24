@@ -7,6 +7,9 @@ tools to obtain the data the model needs via web scraping,
 and tools to back-test the model against past games
 to quantify how well a model performs.
 
+It primarily uses <https://teamrankings.com> as a source of
+data about possessions, offensive efficiency, and defensive
+efficiency.
 
 ## Drivers
 
@@ -66,14 +69,14 @@ offensive output for each team (and a score).
 
 Different sites offer different rankings for these quantities:
 
-* kenpom.com:
-    * offers an adjusted offensive/defensive efficiency, and tempo
-    * the catch: this data is updated each day, historical snapshots are not possible
-    * these values are only used if the model is predicting a game within 90 days
-
-* teamrankings.com
+* <https://teamrankings.com>:
     * [offensive efficiency](https://www.teamrankings.com/ncaa-basketball/stat/offensive-efficiency/) for year, last 10, last 3, home, away, etc.
     * [defensive efficiency](https://www.teamrankings.com/ncaa-basketball/stat/defensive-efficiency) 
     * [possessions per game](https://www.teamrankings.com/ncaa-basketball/stat/possessions-per-game), same as tempo 
     * can also obtain historical snapshots for doing backtesting of prior years
+
+* TODO: <https://kenpom.com>:
+    * offers an adjusted offensive/defensive efficiency, and tempo
+    * the catch: this data is updated each day, historical snapshots are not possible
+    * these values are only used if the model is predicting a game within 90 days
 

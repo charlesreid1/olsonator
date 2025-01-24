@@ -3,6 +3,7 @@ spread-per-game-hist/*.txt
 spread-per-game-hist/*snippet.py
 CBBpy
 memo
+.DS_Store
 *.json
 *.html
 *.csv
