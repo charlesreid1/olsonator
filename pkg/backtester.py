@@ -302,14 +302,18 @@ class Backtester(object):
 
         print(f"\tTest name:\t\t{test_name}")
 
-        # Number of games 
-        print(f"\tN games:\t\t{len(schedule_data)}")
-
         # Start date
         print(f"\tStart date:\t\t{self.start_date}")
 
         # End date
         print(f"\tEnd date:\t\t{self.end_date}")
+
+        # Number of days
+        ndays = datetime.strptime(timedelta(self.end_date - self.start_date), "%Y-%m-%d")
+        print(f"\tN days:\t\t{ndays}")
+
+        # Number of games 
+        print(f"\tN games:\t\t{len(schedule_data)}")
 
         # Teams
         if len(self.teams)>0:
