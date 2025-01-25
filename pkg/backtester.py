@@ -1,5 +1,8 @@
-import json
+import simplejson as json
 import os
+import pathlib
+import copy
+import statistics
 from datetime import datetime, timedelta
 import cbbpy.mens_scraper as CbbpyScraper
 
@@ -13,7 +16,9 @@ from .names import (
     is_kenpom_team,
     is_donch_team,
     is_teamrankings_team,
+    normalize_to_teamrankings_names,
 )
+from .utils import repl
 
 
 class Backtester(object):
@@ -34,13 +39,14 @@ class Backtester(object):
         self.model_parameters = model.model_parameters
 
         # Directories
-        self.trdir = os.path.join(self.model_parameters['data_directory'], 'backtester')
-        self.jdatadir = os.path.join(self.trdir, 'json')
+        self.datadir = os.path.join(self.model_parameters['data_directory'])
+        self.sched_datadir = os.path.join(self.datadir, 'schedule', 'json')
+        self.bktst_datadir = os.path.join(self.datadir, 'backtest', 'json')
 
-        if not os.path.exists(self.trdir):
-            os.mkdir(self.trdir)
-        if not os.path.exists(self.jdatadir):
-            os.mkdir(self.jdatadir)
+        if not os.path.exists(self.sched_datadir):
+            pathlib.Path(self.sched_datadir).mkdir(parents=True)
+        if not os.path.exists(self.bktst_datadir):
+            pathlib.Path(self.bktst_datadir).mkdir(parents=True)
 
         # Verify the dates are valid, but keep as str
         self.start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
@@ -65,8 +71,8 @@ class Backtester(object):
             raise Exception(msg)
 
         self.teams = []
-        for team in teams:
-            if team is not None:
+        if teams is not None:
+            for team in teams:
                 # Verify the team is valid, then stash
                 if is_teamrankings_team(team):
                     self.teams.append(team)
@@ -78,7 +84,15 @@ class Backtester(object):
     def _get_schedule_fpath_json(self, stamp):
         """Get path to JSON file for schedule data for given date stamp"""
         fname = "schedule_" + stamp + ".json"
-        fpath = os.path.join(self.jdatadir, fname)
+        fpath = os.path.join(self.sched_datadir, fname)
+        return fpath
+
+    def _get_backtest_fpath_json(self, test_name):
+        """Get path to JSON file for schedule data for given date stamp"""
+        stamp = datetime.now().strftime("%Y%m%d")
+        test_name = repl(test_name)
+        fname = test_name + "_" + stamp + ".json"
+        fpath = os.path.join(self.bktst_datadir, fname)
         return fpath
 
     def _get_schedule_data(self):
@@ -108,7 +122,7 @@ class Backtester(object):
                 with open(fpath, 'r') as f:
                     today_data = json.load(f)
             except json.decoder.JSONDecodeError:
-                print(f"Invalid JSON file at {fpath}, no idea")
+                print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
 
             except FileNotFoundError:
                 print(f"No file at {fpath}, creating ourselves")
@@ -122,7 +136,7 @@ class Backtester(object):
                 for gameid in gameids:
                     (game_info, _, _) = CbbpyScraper.get_game(gameid, box=False, pbp=False)
                     game_info = _flatten(game_info.to_dict())
-                    print(f"Now on {game_info['game_day']} - {game_info['away_team']} @ {game_info['home_team']}")
+                    print(f"Now on {game_info['away_team']} @ {game_info['home_team']} ({game_info['game_day']})")
 
                     # game_id                       401708334
                     # game_status                       Final
@@ -167,18 +181,41 @@ class Backtester(object):
                         game_time += 1200
                     olsonator_game['game_time'] = game_time
 
+                    olsonator_game['vegas_away_spread'] = None
+                    try:
+                        away_spread = -1.0*float(game_info['home_point_spread'])
+                        olsonator_game['vegas_away_spread'] = away_spread
+                    except (KeyError, ValueError):
+                        print(f"No Vegas spread info for {game_info['away_team']} @ {game_info['home_team']} ({game_info['game_day']})")
+
                     olsonator_game['neutral_site'] = game_info['is_neutral']
+                    olsonator_game['is_conference'] = game_info['is_conference']
+
+                    olsonator_game['away_rank'] = game_info['away_rank']
+                    olsonator_game['home_rank'] = game_info['home_rank']
 
                     # The NCAA API introduces a whole new set of names (includes mascot)
-                    olsonator_game['home_team'] = game_info['home_team']
-                    olsonator_game['away_team'] = game_info['away_team']
+                    try:
+                        olsonator_game['away_team'] = normalize_to_teamrankings_names(game_info['away_team'])
+                        olsonator_game['home_team'] = normalize_to_teamrankings_names(game_info['home_team'])
+                    except TeamNotFoundException:
+                        continue
+
+                    olsonator_game['away_points'] = game_info['away_score']
+                    olsonator_game['home_points'] = game_info['home_score']
+                    olsonator_game['away_spread'] = game_info['home_score'] - game_info['away_score']
+                    olsonator_game['total']       = game_info['away_score'] + game_info['home_score']
 
                     today_data.append(olsonator_game)
 
-                with open(self._get_schedule_fpath_json(date), 'w') as f:
-                    json.dump(today_data, f, indent=4)
+                fpath = self._get_schedule_fpath_json(date)
+                with open(fpath, 'w') as f:
+                    json.dump(today_data, f, indent=4, ignore_nan=True)
+                print(f"Schedule data has been dumped to file {fpath}")
 
             schedule_data += today_data
+
+        return schedule_data
 
     def prepare(self):
         """
@@ -204,14 +241,6 @@ class Backtester(object):
             print(f"Backtester is now preparing data for games on {this_date}")
             tr.fetch_all(this_date)
 
-
-        # TBD.........
-
-
-
-
-
-
     def backtest(self, test_name):
         """
         Obtain a schedule of game information, incl results,
@@ -228,19 +257,45 @@ class Backtester(object):
         #   - stash the resulting games schedule in a json file
         #   - have a method to get that json file (prefix + date)
         # 
-        # - once we have schedule:
-        #   - real spread
-        #   - vegas A spread,
-        #   - model A spread,
+        # - once we have schedule, collect info:
+        #   - real away spread
+        #   - vegas away spread,
+        #   - model away spread,
         # 
         #   - real away/home/total
-        #   - vegas over/under total
+        #   - vegas over/under total (<-- not readily available)
         #   - model predictions (away/home/total)
         # 
-        #   - vegas moneyline
+        #   - vegas moneyline (<-- not readily available??)
         #   - model euclidean win% projection
 
         schedule_data = self._get_schedule_data()
+        model = self.model
+
+        # How and where are we storing the results?
+        # Where is the json file?
+
+        results = []
+        for game in schedule_data:
+            our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
+            if len(self.teams)==0 or our_team:
+                try:
+                    away_points, home_points = model.predict(game)
+                except TeamNotFoundException:
+                    continue
+                item = copy.deepcopy(game)
+                item['predicted_away_points'] = round(away_points,1)
+                item['predicted_home_points'] = round(home_points,1)
+                item['predicted_away_spread'] = round(home_points - away_points, 1)
+                item['predicted_total']       = round(home_points + away_points, 1)
+                results.append(item)
+
+        fpath = self._get_backtest_fpath_json(test_name)
+        with open(fpath, 'w') as f:
+            json.dump(results, f, indent=4, ignore_nan=True)
+        print(f"Predictions have been dumped to file {fpath}")
+
+        # Print a statistical summary
 
 
 
@@ -254,7 +309,3 @@ class Backtester(object):
         # 
         # /spread-movement - page with final vegas spread
         # /box-score - page with final score
-
-
-
-
