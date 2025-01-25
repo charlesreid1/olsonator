@@ -51,10 +51,10 @@ def backtest():
     backtester.prepare()
     backtester.backtest(test_name="backtest_arizona")
 
-    ## # Run a backtest for all teams
-    ## backtester = Backtester(model=model, start_date="2025-01-21", end_date="2025-01-22")
-    ## backtester.prepare()
-    ## backtester.backtest(test_name="backtest_all")
+    # Run a backtest for all teams
+    backtester = Backtester(model, start_date="2025-01-18", end_date="2025-01-19")
+    backtester.prepare()
+    backtester.backtest(test_name="backtest_all")
 
 
 if __name__=="__main__":
