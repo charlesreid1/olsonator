@@ -1,8 +1,9 @@
-import simplejson as json
+import math
 import os
 import pathlib
 import copy
 import statistics
+import simplejson as json
 from datetime import datetime, timedelta
 import cbbpy.mens_scraper as CbbpyScraper
 
@@ -35,6 +36,10 @@ class Backtester(object):
         end_date: str,
         teams: list = None
     ):
+        """
+        Inputs:
+        start_date and end_date should be dates in the format YYYY-MM-DD
+        """
         self.model = model
         self.model_parameters = model.model_parameters
 
@@ -52,7 +57,6 @@ class Backtester(object):
         self.start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
         self.end_date = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%d")
 
-        # Ensure we are limiting scraping by not backtesting more than 90 days at a time
         start_dt = datetime.strptime(self.start_date, "%Y-%m-%d")
         end_dt   = datetime.strptime(self.end_date,   "%Y-%m-%d")
 
@@ -63,12 +67,6 @@ class Backtester(object):
             this_date = counter_dt.strftime("%Y-%m-%d")
             self.all_dates.append(this_date)
             counter_dt += timedelta(days=1)
-
-        if (end_dt - start_dt) > timedelta(days=90):
-            msg = "Requesting more than 90 days of data is not allowed. "
-            msg += "Make sure you have your dates correct. "
-            msg += "If dates are correct, remove this exception from the code."
-            raise Exception(msg)
 
         self.teams = []
         if teams is not None:
@@ -238,7 +236,7 @@ class Backtester(object):
         tr = TeamRankingsDataScraper(self.model_parameters)
 
         for this_date in self.all_dates:
-            print(f"Backtester is now preparing data for games on {this_date}")
+            print(f"Backtester is now scraping data about teams on {this_date}")
             tr.fetch_all(this_date)
 
     def backtest(self, test_name):
@@ -296,8 +294,98 @@ class Backtester(object):
         print(f"Predictions have been dumped to file {fpath}")
 
         # Print a statistical summary
+        print("")
+        print("")
+        print("\t==================================================")
+        print(f"\tModel Backtest Summary: {test_name}")
+        print("\t==================================================")
 
+        print(f"\tTest name:\t\t{test_name}")
 
+        # Number of games 
+        print(f"\tN games:\t\t{len(schedule_data)}")
+
+        # Start date
+        print(f"\tStart date:\t\t{self.start_date}")
+
+        # End date
+        print(f"\tEnd date:\t\t{self.end_date}")
+
+        # Teams
+        if len(self.teams)>0:
+            tms = ", ".join(self.teams)
+        else:
+            tms = "(all)"
+        print(f"\tTeams:\t\t\t{tms}")
+
+        vegas_spread_e = []
+        model_spread_e = []
+        model_spread_vsvegas = [0, 0]
+
+        for item in results:
+
+            if 'vegas_away_spread' not in item or item['vegas_away_spread'] is None:
+                continue
+
+            e = item['vegas_away_spread'] - item['away_spread']
+            vegas_spread_e.append(e*e)
+
+            f = item['predicted_away_spread'] - item['away_spread']
+            model_spread_e.append(f*f)
+
+            # Example: real away spread is -10
+            # vegas says -6
+            # prediction says -4
+            # we would have bet against the spread being so high (-), and lost
+            # 
+            # Example: real away spread is +6
+            # vegas says +2
+            # prediction says +4
+            # we would have bet against the spread being so small (+), and won
+            #
+            # If vegas spread is between real and predicted, we lost against vegas
+            # Another way to check is to see if vegas - real has same sign as vegas - prediction
+            # If they do have the same sign, they're on the same side of vegas, meaning we won
+            s1 = item['vegas_away_spread'] - item['predicted_away_spread']
+            s2 = item['vegas_away_spread'] - item['away_spread']
+            if (s1>0)==(s2>0):
+                # Won the bet
+                model_spread_vsvegas[0] += 1
+            else:
+                # Lost the bet
+                model_spread_vsvegas[1] += 1
+        
+        vegas_spread_mse = statistics.mean(vegas_spread_e)
+        model_spread_mse = statistics.mean(model_spread_e)
+
+        # Vegas Spread MSE
+        print(f"\tVegas Spread MSE:\t{round(vegas_spread_mse,1)}")
+
+        # Model Spread MSE
+        print(f"\tModel Spread MSE:\t{round(model_spread_mse,1)}")
+
+        # Model Spread W-L vs Vegas
+        print(f"\tWin-Loss vs Vegas:\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
+
+        # Win Pct vs Vegas
+        win_pct = 100*(model_spread_vsvegas[0]/(model_spread_vsvegas[0] + model_spread_vsvegas[1]))
+        win_pct = round(win_pct, 1)
+        print(f"\tWin-Loss % vs Vegas:\t{win_pct}%")
+
+        # ROI vs Vegas (assuming -110 odds for every bet)
+        amount = 110
+        profit = 100
+        investment = sum(model_spread_vsvegas)*amount
+        total_profit = model_spread_vsvegas[0]*(amount + profit)
+        total_loss   = model_spread_vsvegas[1]*amount
+        net = total_profit - total_loss
+        roi_110 = (net - investment)/investment
+
+        print(f"\tROI vs Vegas (-110):\t{round(roi_110,1)}%")
+
+        # Table is complete
+        print("")
+        print("")
 
         # Procedure (for future):
         # - open selenium
@@ -309,3 +397,4 @@ class Backtester(object):
         # 
         # /spread-movement - page with final vegas spread
         # /box-score - page with final score
+
