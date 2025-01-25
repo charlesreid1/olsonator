@@ -14,11 +14,8 @@ from pkg.backtester import Backtester
 """
 Backtest the Olsonator NCAA basketball model
 
-This script creates a plain vanilla version of a model.
-
-It then runs two backtests of that model: one backtest
-using games from a single team, and one backtest using 
-all games and all teams.
+This script creates a plain vanilla version of a model,
+and back-tests it.
 
 The model prepare() method ensures the model has all the
 data it needs, or it scrapes the web to obtain it.
@@ -28,13 +25,9 @@ For each game, it passes game information to the model,
 which uses that input data plus data obtained in the
 prepare() method to return predictions about the score.
 
-The backtest() method assembles a dataframe with
-information about the real and predicted score
-for each of the games, but does no further analysis.
-
-The backtest() method can return the dataframe itself,
-or you can do nothing else, and the dataframe will be
-dumped to a file on disk for fast reloading later.
+The backtest() method assembles a JSON file with results
+for each game for later analysis, plus it prints a brief
+statistics summary table, so you don't have to analyze the JSON.
 """
 
 
