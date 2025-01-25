@@ -47,7 +47,7 @@ def backtest():
     model = NCAABModel(model_params)
 
     # Run a backtest for a single team
-    backtester = Backtester(model, start_date="2025-01-18", end_date="2025-01-22", team="Arizona")
+    backtester = Backtester(model, start_date="2025-01-18", end_date="2025-01-19", teams=["Arizona"])
     backtester.prepare()
     backtester.backtest(test_name="backtest_arizona")
 

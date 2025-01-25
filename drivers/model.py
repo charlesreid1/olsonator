@@ -56,8 +56,8 @@ def harness():
         except FileNotFoundError:
             pass
 
-    # To ensure we have the data we need downloaded already,
-    # we need to use a ModelDataHarness class.
+    # To ensure the data we need is downloaded before calling
+    # predict(), we need to use a ModelDataHarness class.
     # We can pass the game we are going to make a prediction for
     # to the prepare() method of that class, and it will determine
     # what data it needs to download, and download it.
@@ -70,6 +70,10 @@ def harness():
     # no problem.
     away_points, home_points = model.predict(basic_game)
     print(f"{basic_game['away_team']} {away_points} - {home_points} {basic_game['home_team']}")
+
+    # Note that the backtesting class handles the
+    # creation of the ModelDataHarness under the hood,
+    # since it gets more complicated with backtesting.
 
 
 if __name__=="__main__":
