@@ -83,7 +83,7 @@ Duquesne Dukes | Duquesne
 ETSU Buccaneer | E Tenn St 
 East Carolina Pirates | E Carolina 
 East Tennessee State Buccaneers | E Tenn St 
-East Texas A&M Lions | 
+East Texas A&M Lions | TX A&M-Com
 Eastern Illinois Panthers | E Illinois 
 Eastern Kentucky Colonels | E Kentucky 
 Eastern Michigan Eagles | E Michigan 
@@ -116,7 +116,7 @@ Grambling State Tigers | Grambling St
 Grambling Tigers | Grambling St 
 Grand Canyon Antelopes | Grd Canyon 
 Grand Canyon Lopes | Grd Canyon 
-Green Bay Phoenix | 
+Green Bay Phoenix | WI-Grn Bay 
 Hampton Pirates | Hampton 
 Harvard Crimson | Harvard
 Hawaii Rainbow Warriors | Hawaii 
@@ -197,7 +197,7 @@ Miami-Ohio RedHawks | Miami (OH)
 Michigan State Spartans | Michigan St 
 Michigan Wolverines | Michigan 
 Middle Tennessee Blue Raiders | Middle Tenn
-Milwaukee Panthers | 
+Milwaukee Panthers | WI-Milwkee 
 Minnesota Golden Gophers | Minnesota 
 Mississippi State Bulldogs | Miss State 
 Mississippi Valley State Delta Devils | Miss Val St  
@@ -255,7 +255,7 @@ Oral Roberts Golden Eagles | Oral Roberts
 Oregon Ducks | Oregon 
 Oregon State Beavers | Oregon St 
 Pacific Tigers | Pacific 
-Penn Quakers | 
+Penn Quakers | Penn St
 Penn State Nittany Lions | Penn St 
 Pennsylvania Quakers | U Penn 
 Pepperdine Waves | Pepperdine 
@@ -307,12 +307,12 @@ Siena Saints | Siena
 Skyhawks | Stonehill  
 South Alabama Jaguars | S Alabama 
 South Carolina Gamecocks | S Carolina 
-South Carolina State Bulldogs | 
+South Carolina State Bulldogs | S Car State
 South Carolina Upstate Spartans | SC Upstate 
 South Dakota Coyotes | South Dakota 
 South Dakota State Jackrabbits | S Dakota St 
 South Florida Bulls | S Florida 
-Southeastern Louisiana Lions | 
+Southeastern Louisiana Lions | SE Louisiana
 Southern Illinois Salukis | S Illinois 
 Southern Indiana Screaming Eagles | S Indiana 
 Southern Jaguars | Southern
@@ -370,12 +370,12 @@ UNC Tar Heels | N Carolina
 UNC Wilmington Seahawks | NC-Wilmgton 
 UNLV Rebels | UNLV 
 USC Trojans | USC 
-USC Upstate Spartans | 
+USC Upstate Spartans | SC Upstate
 UT Arlington Mavericks | TX-Arlington 
-UT Martin Skyhawks | 
-UT Rio Grande Valley Vaqueros | 
+UT Martin Skyhawks | TN Martin 
+UT Rio Grande Valley Vaqueros | TX-Pan Am
 UTEP Miners | TX El Paso 
-UTRGV Vaqueros | 
+UTRGV Vaqueros | TX-Pan Am
 UTSA Roadrunners | UTSA 
 Utah State Aggies | Utah St 
 Utah Tech Trailblazers | Utah Tech 
