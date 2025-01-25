@@ -209,9 +209,7 @@ class NCAABModel(ModelBase):
         home_team = normalize_to_teamrankings_names(game_parameters['home_team'])
 
         game_date = game_parameters['game_date']
-
         game_descr = away_team + " @ " + home_team
-        print(f"Generating model prediction for {game_descr} ({game_date})")
 
         # Tempo gives the rate at which a team has possession of the ball
         # Offensive/defensive efficiency is the rate at which a team gets/gives up points when they have possession
@@ -273,5 +271,11 @@ class NCAABModel(ModelBase):
         # TODO: travel effects
 
         # TODO: team-specific home court advantages
+
+        p = f"Generated model prediction for {game_date}"
+        if e_away_points > e_home_points:
+            print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
+        else:
+            print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
 
         return (round(e_away_points, 1), round(e_home_points, 1))
