@@ -118,19 +118,27 @@ class NCAABModel(ModelBase):
             m.append(item[dimension])
         return statistics.mean(m)
 
+    def _get_year(self, game_date):
+        # Any game after August is part of the next season
+        if int(game_date[4:6])>8:
+            year = int(game_date[0:4])
+        else:
+            year = int(game_date[0:4]) - 1
+        return year
+
     def get_avg_tempo(self, gp):
         game_date = gp['game_date'].replace("-", "")
-        year = int(game_date[0:4]) - 1
+        year = self._get_year(game_date)
         return self._get_avg_template_func(gp, "tempo", f"tempo_{year}")
 
     def get_avg_off_eff(self, gp):
         game_date = gp['game_date'].replace("-", "")
-        year = int(game_date[0:4]) - 1
+        year = self._get_year(game_date)
         return self._get_avg_template_func(gp, "off_eff", f"off_eff_{year}")
 
     def get_avg_def_eff(self, gp):
         game_date = gp['game_date'].replace("-", "")
-        year = int(game_date[0:4]) - 1
+        year = self._get_year(game_date)
         return self._get_avg_template_func(gp, "def_eff", f"def_eff_{year}")
 
     def _get_school_template_func(self, game_parameters, school, fpath_prefix, dimension):
@@ -148,17 +156,17 @@ class NCAABModel(ModelBase):
 
     def get_school_tempo(self, gp, school):
         game_date = gp['game_date'].replace("-", "")
-        year = int(game_date[0:4]) - 1
+        year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "tempo", f"tempo_{year}")
 
     def get_school_off_eff(self, gp, school):
         game_date = gp['game_date'].replace("-", "")
-        year = int(game_date[0:4]) - 1
+        year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "off_eff", f"off_eff_{year}")
 
     def get_school_def_eff(self, gp, school):
         game_date = gp['game_date'].replace("-", "")
-        year = int(game_date[0:4]) - 1
+        year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
 
     def get_pct_adjustment(self, school_val, avg_val):
