@@ -7,7 +7,7 @@ from .names import (
     is_kenpom_team,
     is_donch_team,
     is_teamrankings_team,
-    donch2kenpom, 
+    donch2kenpom,
     kenpom2donch,
     donch2teamrankings,
     teamrankings2donch,
@@ -15,7 +15,11 @@ from .names import (
 )
 from .constants import HOME_ADVANTAGE
 from .utils import assert_required_keys_present
-from .errors import ModelParameterException, ModelPredictException
+from .errors import (
+    ModelParameterException,
+    ModelPredictException,
+    TeamNotFoundException,
+)
 
 
 class ModelBase(object):
@@ -76,7 +80,7 @@ class NCAABModel(ModelBase):
         """
         Get the filename + path of the JSON file containing
         team raning data
-        
+
         prefix should be a stat name (like tempo)
         stamp should be a YYYYMMDD datestamp
         """
@@ -100,11 +104,11 @@ class NCAABModel(ModelBase):
         # with each dimension prefixed by "tempo" or "off_eff" or etc
         # [{  'tempo_team': 'Drake',
         #     'tempo_rank': 120,
-        #     'tempo_2024': 
-        #     'tempo_last3': 
-        #     'tempo_last1': 
-        #     'tempo_home': 
-        #     'tempo_away': 
+        #     'tempo_2024':
+        #     'tempo_last3':
+        #     'tempo_last1':
+        #     'tempo_home':
+        #     'tempo_away':
         # }, ..., ]
 
         # Use whole season rating
@@ -181,7 +185,7 @@ class NCAABModel(ModelBase):
         Given a dictionary of game parameters,
         load tempo/offensive/defensive data,
         make a prediction and return the score.
-        
+
         Returns a tuple:
         (away_points, home_points)
         """
@@ -192,16 +196,19 @@ class NCAABModel(ModelBase):
             raise ModelPredictException(msg)
 
         # Whatever names we were given, find our way to the teamrankings ones
+        # This may throw a TeamNotFoundException, catch it wherever we are calling predict()
         away_team = normalize_to_teamrankings_names(game_parameters['away_team'])
         home_team = normalize_to_teamrankings_names(game_parameters['home_team'])
 
+        game_date = game_parameters['game_date']
+
         game_descr = away_team + " @ " + home_team
-        print(f"Generating model prediction for {game_descr}")
+        print(f"Generating model prediction for {game_descr} ({game_date})")
 
         # Tempo gives the rate at which a team has possession of the ball
         # Offensive/defensive efficiency is the rate at which a team gets/gives up points when they have possession
         # These combine to give us expected points scored
-        
+
         # ----------
         # Part 1 - calculate league average tempo/off/def
         avg_tempo   = self.get_avg_tempo(game_parameters)
@@ -260,4 +267,3 @@ class NCAABModel(ModelBase):
         # TODO: team-specific home court advantages
 
         return (round(e_away_points, 1), round(e_home_points, 1))
-
