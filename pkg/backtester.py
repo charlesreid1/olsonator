@@ -309,8 +309,10 @@ class Backtester(object):
         print(f"\tEnd date:\t\t{self.end_date}")
 
         # Number of days
-        ndays = datetime.strptime(timedelta(self.end_date - self.start_date), "%Y-%m-%d")
-        print(f"\tN days:\t\t{ndays}")
+        end = datetime.strptime(self.end_date, "%Y-%m-%d")
+        start = datetime.strptime(self.start_date, "%Y-%m-%d")
+        ndays = (end-start).days
+        print(f"\tN days:\t\t\t{ndays}")
 
         # Number of games 
         print(f"\tN games:\t\t{len(schedule_data)}")
@@ -380,10 +382,9 @@ class Backtester(object):
         amount = 110
         profit = 100
         investment = sum(model_spread_vsvegas)*amount
-        total_profit = model_spread_vsvegas[0]*(amount + profit)
-        total_loss   = model_spread_vsvegas[1]*amount
-        net = total_profit - total_loss
-        roi_110 = (net - investment)/investment
+        gross = model_spread_vsvegas[0]*(amount + profit)
+        net = gross - investment
+        roi_110 = 100*(net/investment)
 
         print(f"\tROI vs Vegas (-110):\t{round(roi_110,1)}%")
 
