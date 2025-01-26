@@ -224,7 +224,7 @@ New Orleans Privateers | New Orleans LA
 Niagara Purple Eagles | Lewiston NY
 Nicholls Colonels | Thibodaux LA
 Nicholls State Colonels | Thibodaux LA 
-Norfolk State Spartans | Norofolk VA
+Norfolk State Spartans | Norfolk VA
 North Alabama Lions | Florence AL
 North Carolina A&T Aggies | Greensboro NC
 North Carolina Central Eagles | Durham NC
@@ -325,7 +325,7 @@ St. Francis Red Flash | Loretto PA
 St. John's Red Storm | New York NY
 St. Thomas Tommies | St. Paul MN
 St. Thomas-Minnesota Tommies | St. Paul MN
-Stanford Cardinal | Palo Ato CA
+Stanford Cardinal | Palo Alto CA
 Stephen F. Austin Lumberjacks | Nacogdoches TX
 Stetson Hatters | DeLand FL
 Stonehill Skyhawks | Easton MA
