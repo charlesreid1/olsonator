@@ -26,10 +26,7 @@ from .errors import (
 class ModelBase(object):
     """
     Define a base class for a model.
-
-    As of now, this is just for NCAAB,
-    and there is only one NCAAB model,
-    but that may change in future.
+    (Currently just NCAA basketball)
 
     Any Model should accept a dict of
     model parameters in its constructor.
@@ -77,54 +74,6 @@ class NCAABModel(ModelBase):
     """
     Define a class for an NCAAB basketball game.
     """
-    def _get_fpath_json(self, prefix, stamp):
-        """
-        Get the filename + path of the JSON file containing
-        team raning data
-
-        prefix should be a stat name (like tempo)
-        stamp should be a YYYYMMDD datestamp
-        """
-        fname = prefix + "_" + stamp + ".json"
-        trpath = os.path.join(self.model_parameters['data_directory'], 'teamrankings')
-        jdatadir = os.path.join(trpath, 'json')
-        fpath = os.path.join(jdatadir, fname)
-        return fpath
-
-    @cache
-    def _get_avg_template_func(self, game_date, fpath_prefix, dimension):
-        """
-        Template function for fetching data,
-        computing the average of a dimension,
-        and returning it.
-        """
-        with open(self._get_fpath_json(fpath_prefix, game_date), 'r') as f:
-            dat = json.load(f)
-
-        # JSON object just loaded is a list of dictionaries,
-        # with each dimension prefixed by "tempo" or "off_eff" or etc
-        # [{  'tempo_team': 'Drake',
-        #     'tempo_rank': 120,
-        #     'tempo_2024':
-        #     'tempo_last3':
-        #     'tempo_last1':
-        #     'tempo_home':
-        #     'tempo_away':
-        # }, ..., ]
-
-        m = []
-        for item in dat:
-            m.append(item[dimension])
-        return statistics.mean(m)
-
-    def _get_year(self, game_date):
-        # Any game after August is part of the next season
-        if int(game_date[4:6])>8:
-            year = int(game_date[0:4])
-        else:
-            year = int(game_date[0:4]) - 1
-        return year
-
     def get_avg_tempo(self, game_date):
         """Return the average tempo for entire league"""
         year = self._get_year(game_date)
@@ -139,19 +88,6 @@ class NCAABModel(ModelBase):
         """Return the average defensive efficiency for entire league"""
         year = self._get_year(game_date)
         return self._get_avg_template_func(game_date, "def_eff", f"def_eff_{year}")
-
-    def _get_school_template_func(self, game_parameters, school, fpath_prefix, dimension):
-        """
-        Template function for fetching data,
-        getting the dimension value for a given school,
-        and returning it.
-        """
-        game_date = game_parameters['game_date'].replace("-", "")
-        with open(self._get_fpath_json(fpath_prefix, game_date), 'r') as f:
-            dat = json.load(f)
-        for item in dat:
-            if item[f'{fpath_prefix}_team']==school:
-                return item[dimension]
 
     def get_school_tempo(self, gp, school):
         """Return the tempo (posessions) for this school"""
@@ -170,12 +106,6 @@ class NCAABModel(ModelBase):
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
-
-    def get_pct_adjustment(self, school_val, avg_val):
-        """Return the tempo % adjustment for this school"""
-        school_val_pct = 100*school_val/avg_val
-        school_val_pct_add = school_val_pct - 100
-        return school_val_pct_add
 
     def get_home_adjustment(self, game_parameters, away_points, home_points):
         """
@@ -224,10 +154,10 @@ class NCAABModel(ModelBase):
         avg_tempo   = self.get_avg_tempo(game_date)
 
         away_tempo = self.get_school_tempo(game_parameters, away_team)
-        away_tempo_pct_add = self.get_pct_adjustment(away_tempo, avg_tempo)
+        away_tempo_pct_add = self._get_pct_adjustment(away_tempo, avg_tempo)
 
         home_tempo = self.get_school_tempo(game_parameters, home_team)
-        home_tempo_pct_add = self.get_pct_adjustment(home_tempo, avg_tempo)
+        home_tempo_pct_add = self._get_pct_adjustment(home_tempo, avg_tempo)
 
         # Additive, not multiplicative
         e_tempo = (100 + away_tempo_pct_add + home_tempo_pct_add)*avg_tempo/100
@@ -239,19 +169,19 @@ class NCAABModel(ModelBase):
         avg_off_eff = 100*self.get_avg_off_eff(game_date)
 
         away_off_eff = 100*self.get_school_off_eff(game_parameters, away_team)
-        away_off_eff_pct_add = self.get_pct_adjustment(away_off_eff, avg_off_eff)
+        away_off_eff_pct_add = self._get_pct_adjustment(away_off_eff, avg_off_eff)
 
         home_off_eff = 100*self.get_school_off_eff(game_parameters, home_team)
-        home_off_eff_pct_add = self.get_pct_adjustment(home_off_eff, avg_off_eff)
+        home_off_eff_pct_add = self._get_pct_adjustment(home_off_eff, avg_off_eff)
 
         # Defense
         avg_def_eff = 100*self.get_avg_def_eff(game_date)
 
         away_def_eff = 100*self.get_school_def_eff(game_parameters, away_team)
-        away_def_eff_pct_add = self.get_pct_adjustment(away_def_eff, avg_def_eff)
+        away_def_eff_pct_add = self._get_pct_adjustment(away_def_eff, avg_def_eff)
 
         home_def_eff = 100*self.get_school_def_eff(game_parameters, home_team)
-        home_def_eff_pct_add = self.get_pct_adjustment(home_def_eff, avg_def_eff)
+        home_def_eff_pct_add = self._get_pct_adjustment(home_def_eff, avg_def_eff)
 
         # Defense efficiency = points allowed, so higher def percent add = more points allowed to opponent
         e_away_off_output = (100 + away_off_eff_pct_add + home_def_eff_pct_add)*avg_off_eff/100
@@ -284,3 +214,73 @@ class NCAABModel(ModelBase):
                 print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
 
         return (round(e_away_points, 1), round(e_home_points, 1))
+
+
+    # ----------------------------------------
+    # Below are private utility/helper methods
+
+    def _get_fpath_json(self, prefix, stamp):
+        """
+        Get the filename + path of the JSON file containing
+        team raning data
+
+        prefix should be a stat name (like tempo)
+        stamp should be a YYYYMMDD datestamp
+        """
+        fname = prefix + "_" + stamp + ".json"
+        trpath = os.path.join(self.model_parameters['data_directory'], 'teamrankings')
+        jdatadir = os.path.join(trpath, 'json')
+        fpath = os.path.join(jdatadir, fname)
+        return fpath
+
+    @cache
+    def _get_avg_template_func(self, game_date, fpath_prefix, dimension):
+        """
+        Template function for fetching data,
+        computing the average of a dimension,
+        and returning it.
+        """
+        with open(self._get_fpath_json(fpath_prefix, game_date), 'r') as f:
+            dat = json.load(f)
+
+        # JSON object just loaded is a list of dictionaries,
+        # with each dimension prefixed by "tempo" or "off_eff" or etc
+        # [{  'tempo_team': 'Drake',
+        #     'tempo_rank': 120,
+        #     'tempo_2024':
+        #     'tempo_last3':
+        #     'tempo_last1':
+        #     'tempo_home':
+        #     'tempo_away':
+        # }, ..., ]
+
+        m = []
+        for item in dat:
+            m.append(item[dimension])
+        return statistics.mean(m)
+
+    def _get_year(self, game_date):
+        # Any game after August is part of the next season
+        if int(game_date[4:6])>8:
+            year = int(game_date[0:4])
+        else:
+            year = int(game_date[0:4]) - 1
+        return year
+
+    def _get_school_template_func(self, game_parameters, school, fpath_prefix, dimension):
+        """
+        Template function for fetching data, getting the
+        dimension value for a given school, and returning it.
+        """
+        game_date = game_parameters['game_date'].replace("-", "")
+        with open(self._get_fpath_json(fpath_prefix, game_date), 'r') as f:
+            dat = json.load(f)
+        for item in dat:
+            if item[f'{fpath_prefix}_team']==school:
+                return item[dimension]
+
+    def _get_pct_adjustment(self, school_val, avg_val):
+        """Return the tempo % adjustment for this school"""
+        school_val_pct = 100*school_val/avg_val
+        school_val_pct_add = school_val_pct - 100
+        return school_val_pct_add
