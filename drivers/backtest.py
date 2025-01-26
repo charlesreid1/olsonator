@@ -36,7 +36,10 @@ DATADIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
 
 def backtest():
     # Create a model with default parameter set
-    model_params = {'data_directory': DATADIR}
+    model_params = {
+        'data_directory': DATADIR,
+        'quiet': False
+    }
     model = NCAABModel(model_params)
 
     # Run a backtest for all teams
