@@ -2,6 +2,15 @@ import json
 import os
 from rapidfuzz import fuzz
 
+from .constants import (
+    DONCH_TEAMS,
+    KENPOM_TEAMS,
+    TR_TEAMS,
+    DONCH2KENPOM_MAP,
+    KENPOM2DONCH_MAP,
+    DONCH2TR_MAP,
+    TR2DONCH_MAP,
+)
 from .errors import TeamNotFoundException
 
 
@@ -10,30 +19,16 @@ Utility functions related to team names
 """
 
 
-PKG_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEAM_DIR = os.path.join(PKG_ROOT, 'data', 'teams', 'json') 
-
-
-def load_list(fname):
-    """
-    Load a list of team names used by a particular site
-    """
-    fpath = os.path.join(TEAM_DIR, fname)
-    with open(fpath, 'r') as f:
-        names_list = json.load(f)
-    return names_list
-
-
 def get_kenpom_teams():
-    return load_list("kenpom.json")
+    return KENPOM_TEAMS
 
 
 def get_donch_teams():
-    return load_list("donch.json")
+    return DONCH_TEAMS
 
 
 def get_teamrankings_teams():
-    return load_list("teamrankings.json")
+    return TR_TEAMS
 
 
 def is_kenpom_team(team_name):
@@ -44,17 +39,15 @@ def is_kenpom_team(team_name):
 
 def is_donch_team(team_name):
     """Is this team name in the donch set of team names?"""
-    donch_list = get_donch_teams()
-    return team_name in donch_list
+    return team_name in DONCH_TEAMS
 
 
 def is_teamrankings_team(team_name):
     """Is this team name in the teamrankings set of team names?"""
-    teamrankings_list = get_teamrankings_teams()
-    return team_name in teamrankings_list
+    return team_name in TR_TEAMS
 
 
-def lookup(team_name, fname):
+def lookup(team_name, names_map):
     """
     Look up a team name in a given JSON file that maps
     team names from one universe to another, and return
@@ -63,10 +56,6 @@ def lookup(team_name, fname):
     There are multiple name lookup maps in JSON files,
     so this is a generic function that parameterizes it.
     """
-    fpath = os.path.join(TEAM_DIR, fname)
-    with open(fpath, 'r') as f:
-        names_map = json.load(f)
-
     # First, check if the name is an exact match
     if team_name in names_map:
         return names_map[team_name]
@@ -87,22 +76,22 @@ def lookup(team_name, fname):
 
 def donch2kenpom(name):
     """Convert a donchess school name to a kenpom school name"""
-    return lookup(name, fname="donch2kenpom.json")
+    return map_lookup(name, DONCH2KENPOM_MAP)
 
 
 def kenpom2donch(name):
     """Convert a kenpom school name to a donchess school name"""
-    return lookup(name, fname="kenpom2donch.json")
+    return map_lookup(name, KENPOM2DONCH_MAP)
 
 
 def donch2teamrankings(name):
     """Convert a donchess school name to a teamrankings school name"""
-    return lookup(name, fname="donch2teamrankings.json")
+    return map_lookup(name, DONCH2TR_MAP)
 
 
 def teamrankings2donch(name):
     """Convert a teamrankings school name to a donchess school name"""
-    return lookup(name, fname="teamrankings2donch.json")
+    return map_lookup(name, TR2DONCH_MAP)
 
 
 def normalize_to_teamrankings_names(team_name):

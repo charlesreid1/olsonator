@@ -1,6 +1,7 @@
 import os
 import json
 import statistics
+from functools import cache
 
 # Names are hard
 from .names import (
@@ -90,13 +91,13 @@ class NCAABModel(ModelBase):
         fpath = os.path.join(jdatadir, fname)
         return fpath
 
-    def _get_avg_template_func(self, game_parameters, fpath_prefix, dimension):
+    @cache
+    def _get_avg_template_func(self, game_date, fpath_prefix, dimension):
         """
         Template function for fetching data,
         computing the average of a dimension,
         and returning it.
         """
-        game_date = game_parameters['game_date'].replace("-", "")
         with open(self._get_fpath_json(fpath_prefix, game_date), 'r') as f:
             dat = json.load(f)
 
@@ -111,8 +112,6 @@ class NCAABModel(ModelBase):
         #     'tempo_away':
         # }, ..., ]
 
-        # Use whole season rating
-        # This is a first pass approach, modify later to try to improve the model
         m = []
         for item in dat:
             m.append(item[dimension])
@@ -126,20 +125,17 @@ class NCAABModel(ModelBase):
             year = int(game_date[0:4]) - 1
         return year
 
-    def get_avg_tempo(self, gp):
-        game_date = gp['game_date'].replace("-", "")
+    def get_avg_tempo(self, game_date):
         year = self._get_year(game_date)
-        return self._get_avg_template_func(gp, "tempo", f"tempo_{year}")
+        return self._get_avg_template_func(game_date, "tempo", f"tempo_{year}")
 
-    def get_avg_off_eff(self, gp):
-        game_date = gp['game_date'].replace("-", "")
+    def get_avg_off_eff(self, game_date):
         year = self._get_year(game_date)
-        return self._get_avg_template_func(gp, "off_eff", f"off_eff_{year}")
+        return self._get_avg_template_func(game_date, "off_eff", f"off_eff_{year}")
 
-    def get_avg_def_eff(self, gp):
-        game_date = gp['game_date'].replace("-", "")
+    def get_avg_def_eff(self, game_date):
         year = self._get_year(game_date)
-        return self._get_avg_template_func(gp, "def_eff", f"def_eff_{year}")
+        return self._get_avg_template_func(game_date, "def_eff", f"def_eff_{year}")
 
     def _get_school_template_func(self, game_parameters, school, fpath_prefix, dimension):
         """
@@ -208,7 +204,7 @@ class NCAABModel(ModelBase):
         away_team = normalize_to_teamrankings_names(game_parameters['away_team'])
         home_team = normalize_to_teamrankings_names(game_parameters['home_team'])
 
-        game_date = game_parameters['game_date']
+        game_date = game_parameters['game_date'].replace("-", "")
         game_descr = away_team + " @ " + home_team
 
         # Tempo gives the rate at which a team has possession of the ball
@@ -217,7 +213,7 @@ class NCAABModel(ModelBase):
 
         # ----------
         # Part 1 - calculate league average tempo/off/def
-        avg_tempo   = self.get_avg_tempo(game_parameters)
+        avg_tempo   = self.get_avg_tempo(game_date)
 
         away_tempo = self.get_school_tempo(game_parameters, away_team)
         away_tempo_pct_add = self.get_pct_adjustment(away_tempo, avg_tempo)
@@ -232,7 +228,7 @@ class NCAABModel(ModelBase):
         # Part 2 - calculate expected offense/defense output, get adjusted output
 
         # Offense
-        avg_off_eff = 100*self.get_avg_off_eff(game_parameters)
+        avg_off_eff = 100*self.get_avg_off_eff(game_date)
 
         away_off_eff = 100*self.get_school_off_eff(game_parameters, away_team)
         away_off_eff_pct_add = self.get_pct_adjustment(away_off_eff, avg_off_eff)
@@ -241,7 +237,7 @@ class NCAABModel(ModelBase):
         home_off_eff_pct_add = self.get_pct_adjustment(home_off_eff, avg_off_eff)
 
         # Defense
-        avg_def_eff = 100*self.get_avg_def_eff(game_parameters)
+        avg_def_eff = 100*self.get_avg_def_eff(game_date)
 
         away_def_eff = 100*self.get_school_def_eff(game_parameters, away_team)
         away_def_eff_pct_add = self.get_pct_adjustment(away_def_eff, avg_def_eff)
@@ -272,10 +268,11 @@ class NCAABModel(ModelBase):
 
         # TODO: team-specific home court advantages
 
-        p = f"Generated model prediction for {game_date}"
-        if e_away_points > e_home_points:
-            print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
-        else:
-            print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
+        if not ('quiet' in self.model_parameters and self.model_parameters['quiet'] is True):
+            p = f"Generated model prediction for {game_date}"
+            if e_away_points > e_home_points:
+                print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
+            else:
+                print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
 
         return (round(e_away_points, 1), round(e_home_points, 1))
