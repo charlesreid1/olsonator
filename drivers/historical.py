@@ -26,6 +26,7 @@ def harness():
     model_params = {'data_directory': DATADIR}
     model = NCAABModel(model_params)
 
+    # https://www.teamrankings.com/ncaa-basketball/matchup/cougars-broncos-2015-01-01
     basic_game = {
         'game_date': '2015-01-01', 
         'game_time': '1400 PST', 
