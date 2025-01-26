@@ -15,7 +15,7 @@ from .errors import TeamNotFoundException
 
 
 """
-Utility functions related to team names
+Utility functions related to team names and geography
 """
 
 
@@ -107,3 +107,14 @@ def normalize_to_teamrankings_names(team_name):
         return kenpom2donch(donch2teamrankings(team_name))
     else:
         raise TeamNotFoundException(f"Could not normalize to TeamRankings name: {team_name}")
+
+
+def get_school_latlong(team_name):
+    team_name = teamrankings2donch(normalize_to_teamrankings_names(team_name))
+    return GEO_LATLONG[team_name]
+
+
+def get_school_city(team_name):
+    team_name = teamrankings2donch(normalize_to_teamrankings_names(team_name))
+    return GEO_CITIES[team_name]
+

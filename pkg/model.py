@@ -4,7 +4,7 @@ import statistics
 from functools import cache
 
 # Names are hard
-from .names import (
+from .teams import (
     is_kenpom_team,
     is_donch_team,
     is_teamrankings_team,
