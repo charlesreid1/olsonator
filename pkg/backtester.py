@@ -82,7 +82,7 @@ class Backtester(object):
 
         # Verbosity
         self.nohush = not ('quiet' in self.model_parameters and self.model_parameters['quiet'] is True)
-
+        self.pstats = 'print_stats' in self.model_parameters and self.model_parameters['print_stats'] is True
 
     def _get_schedule_fpath_json(self, stamp):
         """Get path to JSON file for schedule data for given date stamp"""
@@ -308,7 +308,7 @@ class Backtester(object):
 
         ################################################
 
-        if self.nohush:
+        if self.pstats or self.nohush:
 
             # Print a statistical summary
             print("")

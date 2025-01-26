@@ -38,7 +38,8 @@ def backtest():
     # Create a model with default parameter set
     model_params = {
         'data_directory': DATADIR,
-        'quiet': False
+        'quiet': True,
+        'print_stats': True
     }
     model = NCAABModel(model_params)
 
