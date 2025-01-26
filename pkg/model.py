@@ -269,7 +269,7 @@ class NCAABModel(ModelBase):
         # TODO: team-specific home court advantages
 
         if not ('quiet' in self.model_parameters and self.model_parameters['quiet'] is True):
-            p = f"Generated model prediction for {game_date}"
+            p = f"Generated model prediction for {game_parameters['game_date']}"
             if e_away_points > e_home_points:
                 print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
             else:
