@@ -126,14 +126,17 @@ class NCAABModel(ModelBase):
         return year
 
     def get_avg_tempo(self, game_date):
+        """Return the average tempo for entire league"""
         year = self._get_year(game_date)
         return self._get_avg_template_func(game_date, "tempo", f"tempo_{year}")
 
     def get_avg_off_eff(self, game_date):
+        """Return the average offensive efficiency for entire league"""
         year = self._get_year(game_date)
         return self._get_avg_template_func(game_date, "off_eff", f"off_eff_{year}")
 
     def get_avg_def_eff(self, game_date):
+        """Return the average defensive efficiency for entire league"""
         year = self._get_year(game_date)
         return self._get_avg_template_func(game_date, "def_eff", f"def_eff_{year}")
 
@@ -151,16 +154,19 @@ class NCAABModel(ModelBase):
                 return item[dimension]
 
     def get_school_tempo(self, gp, school):
+        """Return the tempo (posessions) for this school"""
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "tempo", f"tempo_{year}")
 
     def get_school_off_eff(self, gp, school):
+        """Return the offensive efficiency for this school"""
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "off_eff", f"off_eff_{year}")
 
     def get_school_def_eff(self, gp, school):
+        """Return the defensive efficiency for this school"""
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
@@ -174,6 +180,8 @@ class NCAABModel(ModelBase):
     def get_home_adjustment(self, game_parameters, away_points, home_points):
         """
         Adjust the given score for home court advantage.
+        Takes tuple:
+        (unadjusted_away_points, unadjusted_home_points)
         Returns tuple:
         (away_points, home_points)
         """
