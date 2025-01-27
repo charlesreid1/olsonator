@@ -74,7 +74,15 @@ the model and model analysis.
 * `backtest.py` - simple example of backtesting a model.
 
 * `n_team_backtest.py` - example of backtesting a model against
-  games specifically involving one or more teams.
+  games that involve a specific set of teams.
+
+* `historical.py` - example of creating a model and using it to
+  make predictions for a game from a decade ago. Demonstrates the
+  flexibility of the Model Data Harness in handling past years.
+
+* `custom.py` - example showing how to create a child class of the
+  NCAABModel class, and redefine specific functions to modify how
+  the model works, and then backtest it.
 
 
 ## Core Package
@@ -97,11 +105,13 @@ plus any raw and processed data downloaded by web scrapers.
 
 ### Team Data
 
-The `data/teams/` directory contains team name data.
-This is largely hand-curated, with multiple verisons of team names
-from the NCAA API, Kenpom, Sagarin, and others.
+The `data/teams/txt/` directory contains data about team names and cities.
+This can be updated by hand as needed, as there are often multiple versions
+of team names and corner cases that need to be added, since the NCAA API,
+Kenpom, Donchess, TeamRankings, etc all use their own shorthand for 300+ teams,
+and not everyone has the same set of teams as the others.
 
-See [/data/teams/txt/Readme.md](/data/teams/txt/Readme.md).
+See [/data/teams/txt/Readme.md](/data/teams/txt/Readme.md) and [/pkg/teams.py](/pkg/teams.py).
 
 *Many Bothans died to bring us these names.*
 
