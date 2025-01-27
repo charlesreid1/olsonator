@@ -14,7 +14,8 @@ from .teams import (
     kenpom2donch,
     donch2teamrankings,
     teamrankings2donch,
-    normalize_to_teamrankings_names
+    normalize_to_teamrankings_names,
+    normalize_to_donchess_names,
 )
 from .constants import (
     HOME_ADVANTAGE,
@@ -139,9 +140,10 @@ class NCAABModel(ModelBase):
         # ---------------------------
         # Travel distance factors:
 
+        import pdb; pdb.set_trace()
         # Get lat long and dist btwn
-        away_latlong = GEO_LATLONG[teamrankings2donch(game_parameters['away_team'])]
-        home_latlong = GEO_LATLONG[teamrankings2donch(game_parameters['home_team'])]
+        away_latlong = GEO_LATLONG[normalize_to_donchess_names(game_parameters['away_team'])]
+        home_latlong = GEO_LATLONG[normalize_to_donchess_names(game_parameters['home_team'])]
         dist = distance.distance(away_latlong, home_latlong).miles
 
         # Large travel distance factor:
@@ -163,7 +165,9 @@ class NCAABModel(ModelBase):
         # Midwest - Ind/Cin
         # East - Phi, NY, Wash, NE, Bos, Bal, Buf
         #
-        # ...not exactly sure how to handle that
+        # Probably best handled by separate function looking for
+        # matchup factors by identifying big rivalries, or using
+        # GEO_CITIES to spot particular matchups in those regions
 
         # ---------------------------
         # Time zone factors:
@@ -174,29 +178,36 @@ class NCAABModel(ModelBase):
 
         # Now use the time zone to get UTC offset
         # The offset values will look like:
-        # [far west] Hawaii  = -9
-        # [west] Los_Angeles = -8
-        # [mountain] Denver  = -7
-        # [central] Chicago  = -6
-        # [eastern] New_York = -5
-        away_offset = get_utc_offset_int(away_tz)
-        home_offset = get_utc_offset_int(home_tz)
+        # [far west] Hawaii  = 9 -> 4
+        # [west] Los_Angeles = 8 -> 3
+        # [mountain] Denver  = 7 -> 2
+        # [central] Chicago  = 6 -> 1
+        # [eastern] New_York = 5 -> 0
+        away_offset = abs(get_utc_offset_int(away_tz))-5
+        home_offset = abs(get_utc_offset_int(home_tz))-5
 
-        # If offset diff is positive,
-        # home is more west/away is more east
+        # Number of hours difference in timezones btwn away/home
+        # If offset diff is POSITIVE, home is more east and away is more west (away team is more disadvantaged)
+        # If offset diff is NEGATIVE, home is more west and away is more east (away team is less disadvantaged)
+        # If the magnitude is larger, then time difference effects are more likely
         offset_diff = away_offset - home_offset
 
-        # I have no idea why more negative = more accurate???
-        OFFSET_MODIFIER = -0.5
-        away_points -= offset_diff*OFFSET_MODIFIER
-        home_points += offset_diff*OFFSET_MODIFIER
+        OFFSET_MODIFIER = 0.5
 
+        if offset_diff > 0:
+            away_points -= 2*offset_diff*OFFSET_MODIFIER/2
+            home_points += offset_diff*OFFSET_MODIFIER/2
+        else:
+            away_points -= offset_diff*OFFSET_MODIFIER/2
+            home_points += offset_diff*OFFSET_MODIFIER/2
+        
         # Account for effects of early start/late start:
 
         # The game_time in game_parameters is always Pacific time
         start_hr = int(game_parameters['game_time'])//100
 
         # The two factors below (early start and late start) reduced accuracy and increased MSE??
+
         ### # If start <= 10 AM, penalize West (2) and Mountain teams (1)
         ### EARLYSTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
         ### if start_hr <= 10:
