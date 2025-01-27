@@ -30,7 +30,7 @@ for line in lines:
     tokens = [j.strip() for j in line.split("|")]
     team, latlong = tokens[0], tokens[1]
     lat, long = latlong.split(" ")
-    geo_latlong[team] = [float(lat), float(long)]
+    geo_latlong[team] = (float(lat), float(long))
 
 fname = 'geo_latlong.json'
 fpath = os.path.abspath(os.path.join('..', 'json', fname))
