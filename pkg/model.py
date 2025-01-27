@@ -140,7 +140,6 @@ class NCAABModel(ModelBase):
         # ---------------------------
         # Travel distance factors:
 
-        import pdb; pdb.set_trace()
         # Get lat long and dist btwn
         away_latlong = GEO_LATLONG[normalize_to_donchess_names(game_parameters['away_team'])]
         home_latlong = GEO_LATLONG[normalize_to_donchess_names(game_parameters['home_team'])]
