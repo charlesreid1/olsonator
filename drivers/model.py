@@ -32,15 +32,15 @@ def harness():
     model = NCAABModel(model_params)
 
     #basic_game = {
-    #    'game_date': '2025-01-11', 
-    #    'game_time': '0900 PST', 
-    #    'home_team': 'Duke Blue Devils', 
-    #    'away_team': 'Notre Dame Fighting Irish', 
+    #    'game_date': '2025-01-11',
+    #    'game_time': 900,
+    #    'home_team': 'Duke Blue Devils',
+    #    'away_team': 'Notre Dame Fighting Irish',
     #    'neutral_site': False
     #}
     basic_game = {
-        'game_date': '2025-01-16', 
-        'game_time': '2000 PST', 
+        'game_date': '2025-01-16',
+        'game_time': 2000,
         'home_team': 'Gonzaga Bulldogs',
         'away_team': 'Oregon State Beavers',
         'neutral_site': False
