@@ -76,22 +76,22 @@ def lookup(team_name, names_map):
 
 def donch2kenpom(name):
     """Convert a donchess school name to a kenpom school name"""
-    return map_lookup(name, DONCH2KENPOM_MAP)
+    return DONCH2KENPOM_MAP[name]
 
 
 def kenpom2donch(name):
     """Convert a kenpom school name to a donchess school name"""
-    return map_lookup(name, KENPOM2DONCH_MAP)
+    return KENPOM2DONCH_MAP[name]
 
 
 def donch2teamrankings(name):
     """Convert a donchess school name to a teamrankings school name"""
-    return map_lookup(name, DONCH2TR_MAP)
+    return DONCH2TR_MAP[name]
 
 
 def teamrankings2donch(name):
     """Convert a teamrankings school name to a donchess school name"""
-    return map_lookup(name, TR2DONCH_MAP)
+    return TR2DONCH_MAP[name]
 
 
 def normalize_to_teamrankings_names(team_name):
