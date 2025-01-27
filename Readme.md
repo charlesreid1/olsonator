@@ -18,13 +18,11 @@ baskeball API and obtain schedule and spread odds data.
 
 Here is an example of the output of a backtest. Note that this
 backtest utilizes 39 days and 1,482 games' worth of data,
-and only takes 23 seconds to run (not including one-time processing
+and takes < 30 seconds to run (not including one-time processing
 cost of downloading and extracting schedule data from the web,
 which will be cached on disk for any subsequent run):
 
 ![Backtest output example](img/backtest_example_output.png)
-
-***-3.3% ROI means this model will not make any money... Yay!***
 
 ## Quick Start
 
