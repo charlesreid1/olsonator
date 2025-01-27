@@ -10,10 +10,10 @@ import cbbpy.mens_scraper as CbbpyScraper
 from .model import ModelBase
 from .scraper import (
     TeamRankingsDataScraper,
-    #TeamRankingsScheduleScraper,
+    # TeamRankingsScheduleScraper,
 )
 from .errors import TeamNotFoundException
-from .names import (
+from .teams import (
     is_kenpom_team,
     is_donch_team,
     is_teamrankings_team,

@@ -22,7 +22,14 @@ TR2DONCH_MAP = load_json(TEAM_DIR, 'teamrankings2donch.json')
 
 
 ##########################
-# Sport-related constants
+# Geographic data
+
+GEO_CITIES  = load_json(TEAM_DIR, 'geo_cities.json')
+GEO_LATLONG = load_json(TEAM_DIR, 'geo_latlong.json')
+
+
+########################################
+# Constants related to factors/modifiers
 
 # How many points does home court advantage afford
 HOME_ADVANTAGE = 3.09

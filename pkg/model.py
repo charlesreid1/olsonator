@@ -2,9 +2,11 @@ import os
 import json
 import statistics
 from functools import cache
+from geopy import distance
+from tzfpy import get_tz
 
 # Names are hard
-from .names import (
+from .teams import (
     is_kenpom_team,
     is_donch_team,
     is_teamrankings_team,
@@ -14,8 +16,14 @@ from .names import (
     teamrankings2donch,
     normalize_to_teamrankings_names
 )
-from .constants import HOME_ADVANTAGE
-from .utils import assert_required_keys_present
+from .constants import (
+    HOME_ADVANTAGE,
+    GEO_LATLONG,
+)
+from .utils import (
+    assert_required_keys_present,
+    get_utc_offset_int,
+)
 from .errors import (
     ModelParameterException,
     ModelPredictException,
@@ -107,7 +115,7 @@ class NCAABModel(ModelBase):
         year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
 
-    def get_home_adjustment(self, game_parameters, away_points, home_points):
+    def get_home_factor(self, game_parameters, away_points, home_points):
         """
         Adjust the given score for home court advantage.
         Takes tuple:
@@ -118,9 +126,106 @@ class NCAABModel(ModelBase):
         # Currently using a very simple approach of giving home team +N points on the spread
         # But to keep the point total similar, we add/subtract N/2 from each side
         # (otherwise, introduces bias toward the over on over/under predictions)
-        away_points -= HOME_ADVANTAGE/2.0
-        home_points += HOME_ADVANTAGE/2.0
+        away_points -= HOME_ADVANTAGE/2
+        home_points += HOME_ADVANTAGE/2
         return (away_points, home_points)
+
+    def get_geotime_factor(self, game_parameters, away_points, home_points):
+
+        if game_parameters['neutral_site']:
+            # Skip, assume both teams equally affected
+            return (away_points, home_points)
+
+        # ---------------------------
+        # Travel distance factors:
+
+        # Get lat long and dist btwn
+        away_latlong = GEO_LATLONG[teamrankings2donch(game_parameters['away_team'])]
+        home_latlong = GEO_LATLONG[teamrankings2donch(game_parameters['home_team'])]
+        dist = distance.distance(away_latlong, home_latlong).miles
+
+        # Large travel distance factor:
+        LARGE_DISTANCE_MODIFIER = 6.0
+        # (Note: increasing this value sligtly increases MSE, but also increases W-L vs Vegas)
+        # Home has edge if travel distance > 2000 miles
+        if dist > 2000:
+            away_points -= LARGE_DISTANCE_MODIFIER/2
+            home_points += LARGE_DISTANCE_MODIFIER/2
+
+        # Short distances (regional/state matchups):
+        # Visitors have an edge (fan base is closer)
+        # intense rivalries have 2x edge (draws local fans)
+        # FL - TB/Jax/Mia
+        # TX - Dal/Hou
+        # Southeast - Atl/Car
+        # LA - LAR/LAC
+        # Southwest - LV/LA
+        # Midwest - Ind/Cin
+        # East - Phi, NY, Wash, NE, Bos, Bal, Buf
+        #
+        # ...not exactly sure how to handle that
+
+        # ---------------------------
+        # Time zone factors:
+
+        # Get the time zone
+        away_tz = get_tz(*reversed(away_latlong))
+        home_tz = get_tz(*reversed(home_latlong))
+
+        # Now use the time zone to get UTC offset
+        # The offset values will look like:
+        # [far west] Hawaii  = -9
+        # [west] Los_Angeles = -8
+        # [mountain] Denver  = -7
+        # [central] Chicago  = -6
+        # [eastern] New_York = -5
+        away_offset = get_utc_offset_int(away_tz)
+        home_offset = get_utc_offset_int(home_tz)
+
+        # If offset diff is positive,
+        # home is more west/away is more east
+        offset_diff = away_offset - home_offset
+
+        # I have no idea why more negative = more accurate???
+        OFFSET_MODIFIER = -0.5
+        away_points -= offset_diff*OFFSET_MODIFIER
+        home_points += offset_diff*OFFSET_MODIFIER
+
+        # Account for effects of early start/late start:
+
+        # The game_time in game_parameters is always Pacific time
+        start_hr = int(game_parameters['game_time'])//100
+
+        # The two factors below (early start and late start) reduced accuracy and increased MSE??
+        ### # If start <= 10 AM, penalize West (2) and Mountain teams (1)
+        ### EARLYSTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
+        ### if start_hr <= 10:
+        ###     # Early start: penalty is based on central time offset
+        ###     central_offset = -6
+        ###     central_dist = abs(away_offset - central_offset)
+        ###     if central_dist > 0:
+        ###         # central_dist is the multiplier that increases the modifier for more tzs
+        ###         away_points -= central_dist*(EARLYSTART_MODIFIER)/2
+        ###         home_points += central_dist*(EARLYSTART_MODIFIER)/2
+
+        ### # If start >= 5 PM, penalize East (6) central (3) mountain (1)
+        ### LATESTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
+        ### if start_hr >= 17:
+        ###     # Late start: penalty is based on pacific time offset
+        ###     pacific_offset = -8
+        ###     # Note that this factor/penalty is double the prior one
+        ###     pacific_dist = 2*abs(away_offset - pacific_offset)
+        ###     if pacific_dist > 0:
+        ###         away_points -= pacific_dist*(LATESTART_MODIFIER)/2
+        ###         home_points += pacific_dist*(LATESTART_MODIFIER)/2
+
+        # TODO: If we had info about both teams' prior game,
+        # we could determine if second game on the road
+        return (away_points, home_points)
+
+    # def get_conf_adjustment(self, X):
+    # - same division: +1 visitor
+    # - diff conferences: +1 home
 
     def predict(self, game_parameters):
         """
@@ -200,9 +305,10 @@ class NCAABModel(ModelBase):
         # Part 4 - modify expectd number of points for known factors
 
         # adjust for home court advantage
-        e_away_points, e_home_points = self.get_home_adjustment(game_parameters, e_away_points, e_home_points)
+        e_away_points, e_home_points = self.get_home_factor(game_parameters, e_away_points, e_home_points)
 
-        # TODO: travel effects
+        # geography and timezone effects
+        e_away_points, e_home_points = self.get_geotime_factor(game_parameters, e_away_points, e_home_points)
 
         # TODO: team-specific home court advantages
 

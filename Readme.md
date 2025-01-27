@@ -103,6 +103,8 @@ The `data/teams/` directory contains team name data.
 This is largely hand-curated, with multiple verisons of team names
 from the NCAA API, Kenpom, Sagarin, and others.
 
+See [/data/teams/txt/Readme.md](/data/teams/txt/Readme.md).
+
 *Many Bothans died to bring us these names.*
 
 
