@@ -372,7 +372,8 @@ class NCAABModel(ModelBase):
 
         m = []
         for item in dat:
-            m.append(item[dimension])
+            if item[dimension] is not None:
+                m.append(item[dimension])
         return statistics.mean(m)
 
     def _get_year(self, game_date):
@@ -393,10 +394,14 @@ class NCAABModel(ModelBase):
             dat = json.load(f)
         for item in dat:
             if item[f'{fpath_prefix}_team']==school:
-                return item[dimension]
+                if item[dimension] is not None:
+                    return item[dimension]
+        raise TeamNotFoundException(f"Team {school} on date {game_date} could not be found")
 
     def _get_pct_adjustment(self, school_val, avg_val):
         """Return the tempo % adjustment for this school"""
+        if school_val is None:
+            return 0
         school_val_pct = 100*school_val/avg_val
         school_val_pct_add = school_val_pct - 100
         return school_val_pct_add
