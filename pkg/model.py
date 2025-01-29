@@ -396,7 +396,8 @@ class NCAABModel(ModelBase):
         for item in dat:
             if item[dimension] is not None:
                 m.append(item[dimension])
-        return statistics.mean(m)
+        if len(m)>0:
+            return statistics.mean(m)
 
     def _get_year(self, game_date):
         # Any game after August is part of the next season
