@@ -229,27 +229,27 @@ class NCAABModel(ModelBase):
 
         # The two factors below (early start and late start) reduced accuracy and increased MSE??
 
-        ### # If start <= 10 AM, penalize West (2) and Mountain teams (1)
-        ### EARLYSTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
-        ### if start_hr <= 10:
-        ###     # Early start: penalty is based on central time offset
-        ###     central_offset = 6
-        ###     central_dist = abs(away_offset - central_offset)
-        ###     if central_dist > 0:
-        ###         # central_dist is the multiplier that increases the modifier for more tzs
-        ###         away_points -= central_dist*(EARLYSTART_MODIFIER)/2
-        ###         home_points += central_dist*(EARLYSTART_MODIFIER)/2
+        # If start <= 10 AM, penalize West (2) and Mountain teams (1)
+        EARLYSTART_MODIFIER = 0.0
+        if start_hr <= 10:
+            # Early start: penalty is based on central time offset
+            central_offset = 6
+            central_dist = away_offset - central_offset
+            if central_dist > 0:
+                # central_dist is the multiplier that increases the modifier for more tzs
+                away_points -= central_dist*(EARLYSTART_MODIFIER)/2
+                home_points += central_dist*(EARLYSTART_MODIFIER)/2
 
-        ### # If start >= 5 PM, penalize East (6) central (3) mountain (1)
-        ### LATESTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
-        ### if start_hr >= 17:
-        ###     # Late start: penalty is based on pacific time offset
-        ###     pacific_offset = 8
-        ###     # Note that this factor/penalty is double the prior one
-        ###     pacific_dist = 2*abs(away_offset - pacific_offset)
-        ###     if pacific_dist > 0:
-        ###         away_points -= pacific_dist*(LATESTART_MODIFIER)/2
-        ###         home_points += pacific_dist*(LATESTART_MODIFIER)/2
+        # If start >= 5 PM, penalize East (6) central (3) mountain (1)
+        LATESTART_MODIFIER = 3.0
+        if start_hr >= 17:
+            # Late start: penalty is based on pacific time offset
+            # Note that this factor/penalty is double the prior one
+            pacific_offset = 8
+            pacific_dist = 2*(pacific_offset - away_offset)
+            if pacific_dist > 0:
+                away_points -= pacific_dist*(LATESTART_MODIFIER)/2
+                home_points += pacific_dist*(LATESTART_MODIFIER)/2
 
         # TODO: If we had info about both teams' prior game,
         # we could determine if second game on the road
@@ -350,6 +350,15 @@ class NCAABModel(ModelBase):
                 print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
             else:
                 print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
+
+        SPREAD_TOO_NARROW = 2
+        SPREAD_TOO_WIDE = 20
+        if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
+            msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
+            raise ModelPredictException(msg)
+        if abs(e_away_points-e_home_points) > SPREAD_TOO_WIDE:
+            msg = f"Error: could not make prediction, spread is too wide (< {SPREAD_TOO_WIDE})"
+            raise ModelPredictException(msg)
 
         return (round(e_away_points, 1), round(e_home_points, 1))
 
