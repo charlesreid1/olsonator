@@ -197,9 +197,19 @@ class NCAABModel(ModelBase):
 
         # In-conference matchups give visitors this edge
         IN_CONFERENCE_MODIFIER  = 1.0
-        OUT_CONFERENCE_MODIFIER = 1.0
+        OUT_CONFERENCE_MODIFIER = 0.5
 
-        LOCAL_RIVALRY_DIST = 110
+        # Spot adjustments to in/out conference adjustments (totally empirical, needs verification)
+        if away_conf in ['ACC', 'BE']:
+            # Need exaggerated in/out conf modifiers
+            IN_CONFERENCE_MODIFIER  = 3*IN_CONFERENCE_MODIFIER
+            OUT_CONFERENCE_MODIFIER = 3*OUT_CONFERENCE_MODIFIER
+        if away_conf in ['ASun', 'BW', 'CAA']:
+            # Need smaller in/out conf modifiers
+            IN_CONFERENCE_MODIFIER  = 0.0
+            OUT_CONFERENCE_MODIFIER = 0.0
+
+        LOCAL_RIVALRY_DIST = 150
 
         if away_conf==home_conf:
             if dist <= LOCAL_RIVALRY_DIST:
@@ -211,7 +221,10 @@ class NCAABModel(ModelBase):
                 home_points -= IN_CONFERENCE_MODIFIER/2
         else:
             if dist > LOCAL_RIVALRY_DIST:
-                # Home gets +1 b/c different conferences
+                # Home gets double modifier b/c different conf and too far for away fans
+                away_points -= 2*(OUT_CONFERENCE_MODIFIER/2)
+                home_points += 2*(OUT_CONFERENCE_MODIFIER/2)
+            else:
                 away_points -= OUT_CONFERENCE_MODIFIER/2
                 home_points += OUT_CONFERENCE_MODIFIER/2
 
@@ -233,48 +246,50 @@ class NCAABModel(ModelBase):
         home_offset = abs(get_utc_offset_int(home_tz))-5
 
         # Number of hours difference in timezones btwn away/home
-        # If offset diff is POSITIVE, home is more east and away is more west (away team is more disadvantaged)
-        # If offset diff is NEGATIVE, home is more west and away is more east (away team is less disadvantaged)
         # If the magnitude is larger, then time difference effects are more likely
         offset_diff = away_offset - home_offset
 
         OFFSET_MODIFIER = 0.5
 
         if offset_diff > 0:
-            away_points -= 2*offset_diff*OFFSET_MODIFIER/2
-            home_points += offset_diff*OFFSET_MODIFIER/2
-        else:
+            # If offset diff is POSITIVE, home is more east and away is more west 
+            # (away team is more disadvantaged)
             away_points -= offset_diff*OFFSET_MODIFIER/2
             home_points += offset_diff*OFFSET_MODIFIER/2
+        else:
+            # If offset diff is NEGATIVE, home is more west and away is more east
+            # (away team is less disadvantaged, but still disadvantaged)
+            away_points -= -1*offset_diff*OFFSET_MODIFIER/4
+            home_points += -1*offset_diff*OFFSET_MODIFIER/4
 
         # Account for effects of early start/late start:
 
         # The game_time in game_parameters is always Pacific time
         start_hr = int(game_parameters['game_time'])//100
 
-        # The two factors below (early start and late start) reduced accuracy and increased MSE??
+        # The two factors below (early start and late start) increase MSE???
 
-        # If start <= 10 AM, penalize West (2) and Mountain teams (1)
-        EARLYSTART_MODIFIER = 0.0
-        if start_hr <= 10:
-            # Early start: penalty is based on central time offset
-            central_offset = 6
-            central_dist = away_offset - central_offset
-            if central_dist > 0:
-                # central_dist is the multiplier that increases the modifier for more tzs
-                away_points -= central_dist*(EARLYSTART_MODIFIER)/2
-                home_points += central_dist*(EARLYSTART_MODIFIER)/2
+        ### # If start <= 10 AM, penalize West (2) and Mountain teams (1)
+        ### EARLYSTART_MODIFIER = 1.0
+        ### if start_hr <= 10:
+        ###     # Early start: penalty is based on central time offset
+        ###     central_offset = 6
+        ###     central_dist = away_offset - central_offset
+        ###     if central_dist > 0:
+        ###         # central_dist is the multiplier that increases the modifier for more tzs
+        ###         away_points -= central_dist*(EARLYSTART_MODIFIER)/2
+        ###         home_points += central_dist*(EARLYSTART_MODIFIER)/2
 
-        # If start >= 5 PM, penalize East (6) central (3) mountain (1)
-        LATESTART_MODIFIER = 3.0
-        if start_hr >= 17:
-            # Late start: penalty is based on pacific time offset
-            # Note that this factor/penalty is double the prior one
-            pacific_offset = 8
-            pacific_dist = 2*(pacific_offset - away_offset)
-            if pacific_dist > 0:
-                away_points -= pacific_dist*(LATESTART_MODIFIER)/2
-                home_points += pacific_dist*(LATESTART_MODIFIER)/2
+        ### # If start >= 5 PM, penalize East (6) central (3) mountain (1)
+        ### LATESTART_MODIFIER = 1.0
+        ### if start_hr >= 17:
+        ###     # Late start: penalty is based on pacific time offset
+        ###     # Note that this factor/penalty is double the prior one
+        ###     pacific_offset = 8
+        ###     pacific_dist = 2*(pacific_offset - away_offset)
+        ###     if pacific_dist > 0:
+        ###         away_points -= pacific_dist*(LATESTART_MODIFIER)/2
+        ###         home_points += pacific_dist*(LATESTART_MODIFIER)/2
 
         # TODO: If we had info about both teams' prior game,
         # we could determine if second game on the road
@@ -354,16 +369,25 @@ class NCAABModel(ModelBase):
         e_away_points = e_tempo*(e_away_off_output/100.0)
         e_home_points = e_tempo*(e_home_off_output/100.0)
 
-        # -----------
-        # Part 4 - modify expectd number of points for known factors
+        # Look for too big/too small spreads BEFORE adding modifiers
+        SPREAD_TOO_NARROW = 1
+        SPREAD_TOO_WIDE = 21
+        if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
+            msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
+            raise ModelPredictException(msg)
+        if abs(e_away_points-e_home_points) > SPREAD_TOO_WIDE:
+            msg = f"Error: could not make prediction, spread is too wide (< {SPREAD_TOO_WIDE})"
+            raise ModelPredictException(msg)
 
+        # -----------
+        # Part 4 - modify expected number of points for known factors
+
+        # TODO: team-specific home court advantages
         # adjust for home court advantage
         e_away_points, e_home_points = self.get_home_factor(game_parameters, e_away_points, e_home_points)
 
         # geography and timezone effects
         e_away_points, e_home_points = self.get_geotime_factor(game_parameters, e_away_points, e_home_points)
-
-        # TODO: team-specific home court advantages
 
         if not ('quiet' in self.model_parameters and self.model_parameters['quiet'] is True):
             p = f"Generated model prediction for {game_parameters['game_date']}"
@@ -371,15 +395,6 @@ class NCAABModel(ModelBase):
                 print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
             else:
                 print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
-
-        SPREAD_TOO_NARROW = 2
-        SPREAD_TOO_WIDE = 20
-        if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
-            msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
-            raise ModelPredictException(msg)
-        if abs(e_away_points-e_home_points) > SPREAD_TOO_WIDE:
-            msg = f"Error: could not make prediction, spread is too wide (< {SPREAD_TOO_WIDE})"
-            raise ModelPredictException(msg)
 
         return (round(e_away_points, 1), round(e_home_points, 1))
 
