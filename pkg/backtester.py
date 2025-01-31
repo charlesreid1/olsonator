@@ -18,6 +18,8 @@ from .teams import (
     is_donch_team,
     is_teamrankings_team,
     normalize_to_teamrankings_names,
+    donch2teamrankings,
+    kenpom2donch,
 )
 from .utils import repl
 
@@ -76,9 +78,9 @@ class Backtester(object):
                 if is_teamrankings_team(team):
                     self.teams.append(team)
                 elif is_donch_team(team):
-                    self.teams.append(donchess2teamranking(team))
+                    self.teams.append(donch2teamrankings(team))
                 elif is_kenpom_team(team):
-                    self.teams.append(donchess2teamranking(kenpom2donchess(team)))
+                    self.teams.append(donch2teamrankings(kenpom2donch(team)))
 
         # Verbosity
         self.nohush = not ('quiet' in self.model_parameters and self.model_parameters['quiet'] is True)
