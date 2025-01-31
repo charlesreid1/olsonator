@@ -399,13 +399,14 @@ class Backtester(object):
                 # Total games played vs Vegas
                 print(f"\tN games vs Vegas:\t{model_spread_vsvegas[0] + model_spread_vsvegas[1]}")
 
-                # Model Spread W-L vs Vegas
-                print(f"\tWin-Loss vs Vegas:\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
-
-                # Win Pct vs Vegas
                 win_pct = 100*(model_spread_vsvegas[0]/(model_spread_vsvegas[0] + model_spread_vsvegas[1]))
                 win_pct = round(win_pct, 1)
-                print(f"\tWin-Loss % vs Vegas:\t{win_pct}%")
+
+                # Model Spread W-L vs Vegas
+                print(f"\tW-L vs Vegas:\t\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
+
+                # Win Pct vs Vegas
+                print(f"\tW-L% vs Vegas:\t\t{win_pct}%")
 
                 # ROI vs Vegas (assuming -110 odds for every bet)
                 amount = 110
