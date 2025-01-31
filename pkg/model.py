@@ -197,9 +197,19 @@ class NCAABModel(ModelBase):
 
         # In-conference matchups give visitors this edge
         IN_CONFERENCE_MODIFIER  = 1.0
-        OUT_CONFERENCE_MODIFIER = 1.0
+        OUT_CONFERENCE_MODIFIER = 0.5
 
-        LOCAL_RIVALRY_DIST = 110
+        # Spot adjustments to in/out conference adjustments (totally empirical, needs verification)
+        if away_conf in ['ACC', 'BE']:
+            # Need exaggerated in/out conf modifiers
+            IN_CONFERENCE_MODIFIER  = 3*IN_CONFERENCE_MODIFIER
+            OUT_CONFERENCE_MODIFIER = 3*OUT_CONFERENCE_MODIFIER
+        if away_conf in ['ASun', 'BW', 'CAA']:
+            # Need smaller in/out conf modifiers
+            IN_CONFERENCE_MODIFIER  = 0.0
+            OUT_CONFERENCE_MODIFIER = 0.0
+
+        LOCAL_RIVALRY_DIST = 150
 
         if away_conf==home_conf:
             if dist <= LOCAL_RIVALRY_DIST:
@@ -211,7 +221,10 @@ class NCAABModel(ModelBase):
                 home_points -= IN_CONFERENCE_MODIFIER/2
         else:
             if dist > LOCAL_RIVALRY_DIST:
-                # Home gets +1 b/c different conferences
+                # Home gets double modifier b/c different conf and too far for away fans
+                away_points -= 2*(OUT_CONFERENCE_MODIFIER/2)
+                home_points += 2*(OUT_CONFERENCE_MODIFIER/2)
+            else:
                 away_points -= OUT_CONFERENCE_MODIFIER/2
                 home_points += OUT_CONFERENCE_MODIFIER/2
 
@@ -356,16 +369,25 @@ class NCAABModel(ModelBase):
         e_away_points = e_tempo*(e_away_off_output/100.0)
         e_home_points = e_tempo*(e_home_off_output/100.0)
 
-        # -----------
-        # Part 4 - modify expectd number of points for known factors
+        # Look for too big/too small spreads BEFORE adding modifiers
+        SPREAD_TOO_NARROW = 1
+        SPREAD_TOO_WIDE = 21
+        if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
+            msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
+            raise ModelPredictException(msg)
+        if abs(e_away_points-e_home_points) > SPREAD_TOO_WIDE:
+            msg = f"Error: could not make prediction, spread is too wide (< {SPREAD_TOO_WIDE})"
+            raise ModelPredictException(msg)
 
+        # -----------
+        # Part 4 - modify expected number of points for known factors
+
+        # TODO: team-specific home court advantages
         # adjust for home court advantage
         e_away_points, e_home_points = self.get_home_factor(game_parameters, e_away_points, e_home_points)
 
         # geography and timezone effects
         e_away_points, e_home_points = self.get_geotime_factor(game_parameters, e_away_points, e_home_points)
-
-        # TODO: team-specific home court advantages
 
         if not ('quiet' in self.model_parameters and self.model_parameters['quiet'] is True):
             p = f"Generated model prediction for {game_parameters['game_date']}"
@@ -373,15 +395,6 @@ class NCAABModel(ModelBase):
                 print(f"{p}: {away_team} {round(e_away_points,1)} - {round(e_home_points,1)} {home_team}")
             else:
                 print(f"{p}: {home_team} {round(e_home_points,1)} - {round(e_away_points,1)} {away_team}")
-
-        SPREAD_TOO_NARROW = 2
-        SPREAD_TOO_WIDE = 20
-        if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
-            msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
-            raise ModelPredictException(msg)
-        if abs(e_away_points-e_home_points) > SPREAD_TOO_WIDE:
-            msg = f"Error: could not make prediction, spread is too wide (< {SPREAD_TOO_WIDE})"
-            raise ModelPredictException(msg)
 
         return (round(e_away_points, 1), round(e_home_points, 1))
 
