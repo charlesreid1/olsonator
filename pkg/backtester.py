@@ -5,12 +5,12 @@ import copy
 import statistics
 import simplejson as json
 from datetime import datetime, timedelta
-import cbbpy.mens_scraper as CbbpyScraper
+#import cbbpy.mens_scraper as CbbpyScraper
 
 from .model import ModelBase
 from .scraper import (
     TeamRankingsDataScraper,
-    # TeamRankingsScheduleScraper,
+    TeamRankingsScheduleScraper,
 )
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import (
@@ -101,6 +101,37 @@ class Backtester(object):
         return fpath
 
     def _get_schedule_data(self):
+        """
+        Get (scrape) schedule data (everything required for
+        model prediction input) for the given date.
+
+        Uses TeamRankings.com for schedule data
+        """
+        schedule_data = []
+
+        ts = TeamRankingsScheduleScraper(self.model_parameters)
+
+        for date in self.all_dates:
+            today_data = []
+            fpath = self._get_schedule_fpath_json(date) 
+            try:
+                if self.nohush:
+                    print(f"Loading schedule data from {fpath}")
+                with open(fpath, 'r') as f:
+                    today_data = json.load(f)
+            except json.decoder.JSONDecodeError:
+                print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
+
+            except FileNotFoundError:
+                print(f"No file at {fpath}, creating ourselves")
+
+                import pdb; pdb.set_trace()
+                ts.fetch_all(this_date)
+
+
+
+    '''
+    def _old_get_schedule_data(self):
         """
         Get (scrape) schedule data (everything required for
         model prediction input) for the given date.
@@ -226,6 +257,7 @@ class Backtester(object):
             schedule_data += today_data
 
         return schedule_data
+    '''
 
     def prepare(self):
         """
