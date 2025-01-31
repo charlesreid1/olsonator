@@ -337,7 +337,8 @@ class Backtester(object):
             print(f"\tN days:\t\t\t{ndays}")
 
             # Number of games 
-            print(f"\tN games:\t\t{len(schedule_data)}")
+            print(f"\tN games total:\t\t{len(schedule_data)}")
+            print(f"\tN games analyzed:\t{len(results)}")
 
             # Teams
             if len(self.teams)>0:
