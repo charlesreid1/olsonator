@@ -99,22 +99,44 @@ class NCAABModel(ModelBase):
         return self._get_avg_template_func(game_date, "def_eff", f"def_eff_{year}")
 
     def get_school_tempo(self, gp, school):
-        """Return the tempo (posessions) for this school"""
+        """Return the tempo (posessions) for this season for this school"""
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
         return self._get_school_template_func(gp, school, "tempo", f"tempo_{year}")
 
+    ### def get_school_off_eff(self, gp, school):
+    ###     """Return the offensive efficiency for this season for school"""
+    ###     game_date = gp['game_date'].replace("-", "")
+    ###     year = self._get_year(game_date)
+    ###     return self._get_school_template_func(gp, school, "off_eff", f"off_eff_{year}")
+
     def get_school_off_eff(self, gp, school):
-        """Return the offensive efficiency for this school"""
+        """Return the offensive efficiency (blend of season average and last 3 average) for this school"""
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
-        return self._get_school_template_func(gp, school, "off_eff", f"off_eff_{year}")
+        seas_eff  = self._get_school_template_func(gp, school, "off_eff", f"off_eff_{year}")
+        try:
+            last3_eff = self._get_school_template_func(gp, school, "off_eff", "off_eff_last_3")
+        except KeyError:
+            last3_eff = seas_eff
+        return 0.95*seas_eff + 0.05*last3_eff
+
+    ### def get_school_def_eff(self, gp, school):
+    ###     """Return the defensive efficiency for this season for this school"""
+    ###     game_date = gp['game_date'].replace("-", "")
+    ###     year = self._get_year(game_date)
+    ###     return self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
 
     def get_school_def_eff(self, gp, school):
-        """Return the defensive efficiency for this school"""
+        """Return the defensive efficiency (blend of season average and last 3 average) for this school"""
         game_date = gp['game_date'].replace("-", "")
         year = self._get_year(game_date)
-        return self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
+        seas_eff  = self._get_school_template_func(gp, school, "def_eff", f"def_eff_{year}")
+        try:
+            last3_eff = self._get_school_template_func(gp, school, "def_eff", f"def_eff_last_3")
+        except KeyError:
+            last3_eff = seas_eff
+        return 0.95*seas_eff + 0.05*last3_eff
 
     def get_home_factor(self, game_parameters, away_points, home_points):
         """
@@ -199,7 +221,7 @@ class NCAABModel(ModelBase):
         else:
             away_points -= offset_diff*OFFSET_MODIFIER/2
             home_points += offset_diff*OFFSET_MODIFIER/2
-        
+
         # Account for effects of early start/late start:
 
         # The game_time in game_parameters is always Pacific time
@@ -211,7 +233,7 @@ class NCAABModel(ModelBase):
         ### EARLYSTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
         ### if start_hr <= 10:
         ###     # Early start: penalty is based on central time offset
-        ###     central_offset = -6
+        ###     central_offset = 6
         ###     central_dist = abs(away_offset - central_offset)
         ###     if central_dist > 0:
         ###         # central_dist is the multiplier that increases the modifier for more tzs
@@ -222,7 +244,7 @@ class NCAABModel(ModelBase):
         ### LATESTART_MODIFIER = 0.0 # add this to constants.py eventually (if this works)
         ### if start_hr >= 17:
         ###     # Late start: penalty is based on pacific time offset
-        ###     pacific_offset = -8
+        ###     pacific_offset = 8
         ###     # Note that this factor/penalty is double the prior one
         ###     pacific_dist = 2*abs(away_offset - pacific_offset)
         ###     if pacific_dist > 0:
@@ -372,8 +394,10 @@ class NCAABModel(ModelBase):
 
         m = []
         for item in dat:
-            m.append(item[dimension])
-        return statistics.mean(m)
+            if item[dimension] is not None:
+                m.append(item[dimension])
+        if len(m)>0:
+            return statistics.mean(m)
 
     def _get_year(self, game_date):
         # Any game after August is part of the next season
@@ -393,10 +417,14 @@ class NCAABModel(ModelBase):
             dat = json.load(f)
         for item in dat:
             if item[f'{fpath_prefix}_team']==school:
-                return item[dimension]
+                if item[dimension] is not None:
+                    return item[dimension]
+        raise TeamNotFoundException(f"Team {school} on date {game_date} could not be found")
 
     def _get_pct_adjustment(self, school_val, avg_val):
         """Return the tempo % adjustment for this school"""
+        if school_val is None:
+            return 0
         school_val_pct = 100*school_val/avg_val
         school_val_pct_add = school_val_pct - 100
         return school_val_pct_add

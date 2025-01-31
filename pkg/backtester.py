@@ -12,7 +12,7 @@ from .scraper import (
     TeamRankingsDataScraper,
     # TeamRankingsScheduleScraper,
 )
-from .errors import TeamNotFoundException
+from .errors import TeamNotFoundException, ModelPredictException
 from .teams import (
     is_kenpom_team,
     is_donch_team,
@@ -290,7 +290,7 @@ class Backtester(object):
             if len(self.teams)==0 or our_team:
                 try:
                     away_points, home_points = model.predict(game)
-                except TeamNotFoundException:
+                except (TeamNotFoundException, ModelPredictException):
                     continue
                 item = copy.deepcopy(game)
                 item['predicted_away_points'] = round(away_points,1)
@@ -298,6 +298,9 @@ class Backtester(object):
                 item['predicted_away_spread'] = round(home_points - away_points, 1)
                 item['predicted_total']       = round(home_points + away_points, 1)
                 results.append(item)
+
+        if len(results)==0:
+            raise Exception("No results")
 
         fpath = self._get_backtest_fpath_json(test_name)
         with open(fpath, 'w') as f:
@@ -377,33 +380,39 @@ class Backtester(object):
                 else:
                     # Lost the bet
                     model_spread_vsvegas[1] += 1
+
+            if len(model_spread_e)>0:
+                model_spread_mse = statistics.mean(model_spread_e)
+
+                # Model Spread RMSE
+                print(f"\tModel Spread RMSE:\t{round(math.sqrt(model_spread_mse),1)}")
             
-            vegas_spread_mse = statistics.mean(vegas_spread_e)
-            model_spread_mse = statistics.mean(model_spread_e)
+            if len(vegas_spread_e)>0:
+                vegas_spread_mse = statistics.mean(vegas_spread_e)
 
-            # Vegas Spread MSE
-            print(f"\tVegas Spread MSE:\t{round(vegas_spread_mse,1)}")
+                # Vegas Spread RMSE
+                print(f"\tVegas Spread RMSE:\t{round(math.sqrt(vegas_spread_mse),1)}")
 
-            # Model Spread MSE
-            print(f"\tModel Spread MSE:\t{round(model_spread_mse,1)}")
+                # Total games played vs Vegas
+                print(f"\tN games vs Vegas:\t{model_spread_vsvegas[0] + model_spread_vsvegas[1]}")
 
-            # Model Spread W-L vs Vegas
-            print(f"\tWin-Loss vs Vegas:\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
+                # Model Spread W-L vs Vegas
+                print(f"\tWin-Loss vs Vegas:\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
 
-            # Win Pct vs Vegas
-            win_pct = 100*(model_spread_vsvegas[0]/(model_spread_vsvegas[0] + model_spread_vsvegas[1]))
-            win_pct = round(win_pct, 1)
-            print(f"\tWin-Loss % vs Vegas:\t{win_pct}%")
+                # Win Pct vs Vegas
+                win_pct = 100*(model_spread_vsvegas[0]/(model_spread_vsvegas[0] + model_spread_vsvegas[1]))
+                win_pct = round(win_pct, 1)
+                print(f"\tWin-Loss % vs Vegas:\t{win_pct}%")
 
-            # ROI vs Vegas (assuming -110 odds for every bet)
-            amount = 110
-            profit = 100
-            investment = sum(model_spread_vsvegas)*amount
-            gross = model_spread_vsvegas[0]*(amount + profit)
-            net = gross - investment
-            roi_110 = 100*(net/investment)
+                # ROI vs Vegas (assuming -110 odds for every bet)
+                amount = 110
+                profit = 100
+                investment = sum(model_spread_vsvegas)*amount
+                gross = model_spread_vsvegas[0]*(amount + profit)
+                net = gross - investment
+                roi_110 = 100*(net/investment)
 
-            print(f"\tROI vs Vegas (-110):\t{round(roi_110,1)}%")
+                print(f"\tROI vs Vegas (-110):\t{round(roi_110,1)}%")
 
             # Table is complete
             print("")
