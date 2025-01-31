@@ -20,6 +20,7 @@ from .teams import (
 from .constants import (
     HOME_ADVANTAGE,
     GEO_LATLONG,
+    CONFERENCES,
 )
 from .utils import (
     assert_required_keys_present,
@@ -186,9 +187,33 @@ class NCAABModel(ModelBase):
         # Midwest - Ind/Cin
         # East - Phi, NY, Wash, NE, Bos, Bal, Buf
         #
-        # Probably best handled by separate function looking for
-        # matchup factors by identifying big rivalries, or using
-        # GEO_CITIES to spot particular matchups in those regions
+        # Since we have the distance anyway,
+        # check for in-conference matchups (visitor +1),
+        # and give visitor +2 if distance < 100
+        # 
+        # If different conference, +1 home
+        away_conf = CONFERENCES[normalize_to_donchess_names(game_parameters['away_team'])]
+        home_conf = CONFERENCES[normalize_to_donchess_names(game_parameters['home_team'])]
+
+        # In-conference matchups give visitors this edge
+        IN_CONFERENCE_MODIFIER  = 1.0
+        OUT_CONFERENCE_MODIFIER = 1.0
+
+        LOCAL_RIVALRY_DIST = 110
+
+        if away_conf==home_conf:
+            if dist <= LOCAL_RIVALRY_DIST:
+                # Visitor gets double modifier b/c easy travel distance for away fans
+                away_points += 2*(IN_CONFERENCE_MODIFIER/2)
+                home_points -= 2*(IN_CONFERENCE_MODIFIER/2)
+            else:
+                away_points += IN_CONFERENCE_MODIFIER/2
+                home_points -= IN_CONFERENCE_MODIFIER/2
+        else:
+            if dist > LOCAL_RIVALRY_DIST:
+                # Home gets +1 b/c different conferences
+                away_points -= OUT_CONFERENCE_MODIFIER/2
+                home_points += OUT_CONFERENCE_MODIFIER/2
 
         # ---------------------------
         # Time zone factors:
@@ -254,10 +279,6 @@ class NCAABModel(ModelBase):
         # TODO: If we had info about both teams' prior game,
         # we could determine if second game on the road
         return (away_points, home_points)
-
-    # def get_conf_adjustment(self, X):
-    # - same division: +1 visitor
-    # - diff conferences: +1 home
 
     def predict(self, game_parameters):
         """

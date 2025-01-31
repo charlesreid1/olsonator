@@ -20,6 +20,10 @@ KENPOM2DONCH_MAP = load_json(TEAM_DIR, 'kenpom2donch.json')
 DONCH2TR_MAP = load_json(TEAM_DIR, 'donch2teamrankings.json')
 TR2DONCH_MAP = load_json(TEAM_DIR, 'teamrankings2donch.json')
 
+# Conferences
+CONFERENCES  = load_json(TEAM_DIR, 'team_conferences.json')
+
+
 
 ##########################
 # Geographic data
