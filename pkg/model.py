@@ -233,48 +233,50 @@ class NCAABModel(ModelBase):
         home_offset = abs(get_utc_offset_int(home_tz))-5
 
         # Number of hours difference in timezones btwn away/home
-        # If offset diff is POSITIVE, home is more east and away is more west (away team is more disadvantaged)
-        # If offset diff is NEGATIVE, home is more west and away is more east (away team is less disadvantaged)
         # If the magnitude is larger, then time difference effects are more likely
         offset_diff = away_offset - home_offset
 
         OFFSET_MODIFIER = 0.5
 
         if offset_diff > 0:
-            away_points -= 2*offset_diff*OFFSET_MODIFIER/2
-            home_points += offset_diff*OFFSET_MODIFIER/2
-        else:
+            # If offset diff is POSITIVE, home is more east and away is more west 
+            # (away team is more disadvantaged)
             away_points -= offset_diff*OFFSET_MODIFIER/2
             home_points += offset_diff*OFFSET_MODIFIER/2
+        else:
+            # If offset diff is NEGATIVE, home is more west and away is more east
+            # (away team is less disadvantaged, but still disadvantaged)
+            away_points -= -1*offset_diff*OFFSET_MODIFIER/4
+            home_points += -1*offset_diff*OFFSET_MODIFIER/4
 
         # Account for effects of early start/late start:
 
         # The game_time in game_parameters is always Pacific time
         start_hr = int(game_parameters['game_time'])//100
 
-        # The two factors below (early start and late start) reduced accuracy and increased MSE??
+        # The two factors below (early start and late start) increase MSE???
 
-        # If start <= 10 AM, penalize West (2) and Mountain teams (1)
-        EARLYSTART_MODIFIER = 0.0
-        if start_hr <= 10:
-            # Early start: penalty is based on central time offset
-            central_offset = 6
-            central_dist = away_offset - central_offset
-            if central_dist > 0:
-                # central_dist is the multiplier that increases the modifier for more tzs
-                away_points -= central_dist*(EARLYSTART_MODIFIER)/2
-                home_points += central_dist*(EARLYSTART_MODIFIER)/2
+        ### # If start <= 10 AM, penalize West (2) and Mountain teams (1)
+        ### EARLYSTART_MODIFIER = 1.0
+        ### if start_hr <= 10:
+        ###     # Early start: penalty is based on central time offset
+        ###     central_offset = 6
+        ###     central_dist = away_offset - central_offset
+        ###     if central_dist > 0:
+        ###         # central_dist is the multiplier that increases the modifier for more tzs
+        ###         away_points -= central_dist*(EARLYSTART_MODIFIER)/2
+        ###         home_points += central_dist*(EARLYSTART_MODIFIER)/2
 
-        # If start >= 5 PM, penalize East (6) central (3) mountain (1)
-        LATESTART_MODIFIER = 3.0
-        if start_hr >= 17:
-            # Late start: penalty is based on pacific time offset
-            # Note that this factor/penalty is double the prior one
-            pacific_offset = 8
-            pacific_dist = 2*(pacific_offset - away_offset)
-            if pacific_dist > 0:
-                away_points -= pacific_dist*(LATESTART_MODIFIER)/2
-                home_points += pacific_dist*(LATESTART_MODIFIER)/2
+        ### # If start >= 5 PM, penalize East (6) central (3) mountain (1)
+        ### LATESTART_MODIFIER = 1.0
+        ### if start_hr >= 17:
+        ###     # Late start: penalty is based on pacific time offset
+        ###     # Note that this factor/penalty is double the prior one
+        ###     pacific_offset = 8
+        ###     pacific_dist = 2*(pacific_offset - away_offset)
+        ###     if pacific_dist > 0:
+        ###         away_points -= pacific_dist*(LATESTART_MODIFIER)/2
+        ###         home_points += pacific_dist*(LATESTART_MODIFIER)/2
 
         # TODO: If we had info about both teams' prior game,
         # we could determine if second game on the road
