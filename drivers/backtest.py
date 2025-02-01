@@ -38,16 +38,18 @@ def backtest():
     # Create a model with default parameter set
     model_params = {
         'data_directory': DATADIR,
-        'quiet': True,
+        'quiet': False,
         'print_stats': True
     }
     model = NCAABModel(model_params)
 
     # Run a backtest for all teams
-    backtester = Backtester(model, start_date="2024-11-01", end_date="2025-01-28")
+    backtester = Backtester(model, start_date="2024-11-04", end_date="2025-01-28")
     backtester.prepare()
     backtester.backtest(test_name="backtest_all")
 
 
 if __name__=="__main__":
     backtest()
+    #import cProfile
+    #cProfile.run('backtest()')
