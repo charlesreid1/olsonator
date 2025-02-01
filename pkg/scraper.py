@@ -3,6 +3,7 @@ import re
 import json
 import time
 from datetime import datetime, timedelta
+import requests
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
@@ -48,43 +49,45 @@ class TeamRankingsDataScraper(object):
         fpath = os.path.join(self.jdatadir, fname)
         return fpath
 
-    def _cleanup_selenium(self):
-        if hasattr(self, 'browser'):
-            try:
-                self.browser.close()
-            except:
-                pass
-
     def _get_page_html(self, url):
-        """
-        Use Selenium webdriver to fetch the url,
-        then return the HTML source of the loaded page
-        """
-        if not hasattr(self, 'browser'):
-            ffopt = webdriver.FirefoxOptions()
-            ffopt.add_argument("--headless")
-            ffopt.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.1")
-            self.browser = webdriver.Firefox(options=ffopt)
+        return self._get_page_html_requests(url)
 
-        self.browser.get(url)
-        time.sleep(2)
-        src = self.browser.page_source
+    def _get_page_html_requests(self, url):
+        """
+        Use requests to fetch the url,
+        then return the HTML source of the loaded page.
+        (This is much faster than using Selenium, so use it when possible)
+        """
+        resp = requests.get(url)
+        src = resp.content
         return src
 
-        #try:
-        #    ffopt = webdriver.FirefoxOptions()
-        #    ffopt.add_argument("--headless")
-        #    ffopt.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.1")
-        #    browser = webdriver.Firefox(options=ffopt)
-        #    browser.get(url)
-        #    time.sleep(3)
-        #    src = browser.page_source
-        #finally:
-        #    try:
-        #        browser.close()
-        #    except:
-        #        pass
-        #return src
+    def _get_page_html_selenium(self, url):
+        """
+        Use Selenium webdriver to fetch the url,
+        then return the HTML source of the loaded page.
+        (This is extremely slow, only use if absolutely necessary)
+        """
+        ffopt = webdriver.FirefoxOptions()
+        ffopt.add_argument("--headless")
+        ffopt.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.1")
+        browser = webdriver.Firefox(options=ffopt)
+        browser.set_page_load_timeout(4)
+
+        try:
+            browser.get(url)
+            time.sleep(2)
+        except:
+            pass
+
+        src = browser.page_source
+
+        try:
+            browser.close()
+        except:
+            pass
+
+        return src
 
     def _get_datatable(self, html):
         """Get the main DataTables table. Useful b/c we never need the soup otherwise."""
@@ -150,8 +153,6 @@ class TeamRankingsDataScraper(object):
                     print(f"Dumping TeamRankings team data to {fpath}")
                 with open(fpath, 'w') as f:
                     json.dump(this_json, f)
-
-        self._cleanup_selenium()
 
 
 class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
