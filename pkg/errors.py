@@ -6,7 +6,7 @@ class ModelPredictException(Exception):
     pass
 
 
-class TeamRankingTableNotFoundException(Exception):
+class TeamRankingsParseError(Exception):
     pass
 
 
