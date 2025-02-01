@@ -214,10 +214,10 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                         away_team = g[1].strip()
                         home_team = g[2].strip()
                         is_neutral = True
-                    game['game_url']   = link
-                    game['away_team']  = away_team
-                    game['home_team']  = home_team
-                    game['is_neutral'] = is_neutral
+                    game['game_url']     = link
+                    game['away_team']    = away_team
+                    game['home_team']    = home_team
+                    game['neutral_site'] = is_neutral
                 elif j==3:
                     # time (always eastern time, format is "9:00 PM")
                     # convert to west coast time, format HHMM
