@@ -48,25 +48,43 @@ class TeamRankingsDataScraper(object):
         fpath = os.path.join(self.jdatadir, fname)
         return fpath
 
+    def _cleanup_selenium(self):
+        if hasattr(self, 'browser'):
+            try:
+                self.browser.close()
+            except:
+                pass
+
     def _get_page_html(self, url):
         """
         Use Selenium webdriver to fetch the url,
         then return the HTML source of the loaded page
         """
-        try:
+        if not hasattr(self, 'browser'):
             ffopt = webdriver.FirefoxOptions()
             ffopt.add_argument("--headless")
             ffopt.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.1")
-            browser = webdriver.Firefox(options=ffopt)
-            browser.get(url)
-            time.sleep(3)
-            src = browser.page_source
-        finally:
-            try:
-                browser.close()
-            except:
-                pass
+            self.browser = webdriver.Firefox(options=ffopt)
+
+        self.browser.get(url)
+        time.sleep(2)
+        src = self.browser.page_source
         return src
+
+        #try:
+        #    ffopt = webdriver.FirefoxOptions()
+        #    ffopt.add_argument("--headless")
+        #    ffopt.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.1")
+        #    browser = webdriver.Firefox(options=ffopt)
+        #    browser.get(url)
+        #    time.sleep(3)
+        #    src = browser.page_source
+        #finally:
+        #    try:
+        #        browser.close()
+        #    except:
+        #        pass
+        #return src
 
     def _get_datatable(self, html):
         """Get the main DataTables table. Useful b/c we never need the soup otherwise."""
@@ -120,6 +138,7 @@ class TeamRankingsDataScraper(object):
         for k in self.urls.keys():
             fpath = self._get_fpath_json(k, game_date_nodashes)
             if (force is True) or (os.path.exists(fpath) is False):
+
                 url = self.urls[k]
                 if game_date_dashes != datetime.now().strftime("%Y-%m-%d"):
                     url += f"?date={game_date_dashes}"
@@ -131,6 +150,8 @@ class TeamRankingsDataScraper(object):
                     print(f"Dumping TeamRankings team data to {fpath}")
                 with open(fpath, 'w') as f:
                     json.dump(this_json, f)
+
+        self._cleanup_selenium()
 
 
 class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
@@ -207,30 +228,18 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         # This does not save the JSON to a file, only returns it
         return schedule
 
-    def _get_movementtable(self, html):
+    def _get_movementtable(self, soup):
         """Get the main movement table on odds pages. Useful b/c we never need the soup otherwise."""
-        soup = BeautifulSoup(html, 'html.parser')
         table = soup.find('table', attrs={"class": "movement-table"})
         if table is None:
             raise TeamRankingsParseError("Odds table cannot be found on game page")
         return table
 
-    def _html2json_ml(self, html):
-        """Extract moneyline odds data from HTML, and send to JSON"""
-        soup = BeautifulSoup(html, 'html.parser')
-
-        ### # Figure out team names from h1 title at top
-        ### away_team, home_team = None, None
-        ### h1s = soup.find_all('h1')
-        ### for h1 in h1s:
-        ###     txt = h1.text
-        ###     if "Money Line Movement" in txt:
-        ###         teams = h1.text.split(": ")[0]
-        ###         atags = h1.find_all('a')
-        ###         away_team = atags[0].text
-        ###         home_team = atags[1].text
-
-        # Figure out which abbrs map to away/home via header text "Matchup Menu: TEX @ OSU"
+    def _get_team_abbrs_matchup_menu(self, soup):
+        """
+        Get team abbreviations from header text.
+        Example: "Matchup Menu: TEX @ OSU"
+        """
         away_abbr, home_abbr = None, None
         h2s = soup.find_all('h2')
         for h2 in h2s:
@@ -240,48 +249,99 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 teams = versus.split(" @ ")
                 away_abbr = teams[0].strip()
                 home_abbr = teams[1].strip()
+        return away_abbr, home_abbr
+
+    def _html2json_g(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+
+        away_score, home_score = None, None
+        tables = soup.find_all('table', attrs={'class': 'matchup-table'})
+        for table in tables:
+            header1 = table.find('tr').find('th')
+            if "Final Score" in header1.text:
+                rows = table.find('tbody').find_all('tr')
+                away_row, home_row = rows[0], rows[1]
+
+                away_cols, home_cols = away_row.find_all('td'), home_row.find_all('td')
+                away_score = int(away_cols[3].text)
+                home_score = int(home_cols[3].text)
+
+        outcome = {}
+        outcome['away_score'] = away_score
+        outcome['home_score'] = home_score
+        return outcome
+
+    def _html2json_ml(self, html):
+        """Extract moneyline odds data from HTML, and send to JSON"""
+        soup = BeautifulSoup(html, 'html.parser')
+        away_abbr, home_abbr = self._get_team_abbrs_matchup_menu(soup)
+
+        odds = {}
 
         away_ml, home_ml = None, None
         for lab in ['tab-001', 'tab-002']:
             div = soup.find('div', attrs={'id': lab})
             table = div.find('table')
-            cell = table.find('tbody').find('tr').find('td')
-            k, v = cell.text.split(" ")
-            if k==away_abbr:
-                away_ml = v
-            if k==home_abbr:
-                home_ml = v
+            cells = table.find('tbody').find('tr').find_all('td')
+            
+            current, opening_ml = cells[0].text, cells[2].text
+            k, current_ml = current.split(" ")
 
-        odds = {}
-        odds['vegas_away_moneyline'] = away_ml
-        odds['vegas_home_moneyline'] = home_ml
+            if k==away_abbr:
+                odds['vegas_away_moneyline']         = int(current_ml) 
+                odds['vegas_away_moneyline_opening'] = int(opening_ml) 
+            elif k==home_abbr:
+                odds['vegas_home_moneyline']         = int(current_ml) 
+                odds['vegas_home_moneyline_opening'] = int(opening_ml) 
+
         return odds
 
     def _html2json_sp(self, html):
         """Extract spread odds data from HTML, and send to JSON"""
-        table = self._get_movementtable(html)
-        row1 = table.find('tr')
-        cols = row1.find_all('td')
+        soup = BeautifulSoup(html, 'html.parser')
+        away_abbr, home_abbr = self._get_team_abbrs_matchup_menu(soup)
+
+        table = soup.find('table', attrs={"class": "movement-table"})
+        cells = table.find('tr').find_all('td')
+
+        current, opening_sp = cells[0].text, cells[2].text
+        k, current_sp = current.split(" ")
 
         odds = {}
+
+        if k==away_abbr:
+            away_spread = float(current_sp)
+            home_spread = -1*float(current_sp)
+            away_open   = float(opening_sp) 
+            home_open   = -1*float(opening_sp) 
+        elif k==home_abbr:
+            away_spread = -1*float(current_sp)
+            home_spread = float(current_sp)
+            away_open   = -1*float(opening_sp)
+            home_open   = float(opening_sp)
+
+        odds['vegas_away_spread']         = round(away_spread,1)
+        odds['vegas_home_spread']         = round(home_spread,1)
+        odds['vegas_away_spread_opening'] = round(away_open,1)
+        odds['vegas_home_spread_opening'] = round(home_open,1)
+
         return odds
 
     def _html2json_ou(self, html):
         """Extract o/u odds data from HTML, and send to JSON"""
-        table = self._get_movementtable(html)
-        row1 = table.find('tr')
-        cols = row1.find_all('td')
+        soup = BeautifulSoup(html, 'html.parser')
+        away_abbr, home_abbr = self._get_team_abbrs_matchup_menu(soup)
 
-        col0 = cols[0]
-        col2 = cols[2]
+        table = soup.find('table', attrs={"class": "movement-table"})
+        cells = table.find('tr').find_all('td')
 
         # Format "Total 165.5"
-        ou_total = float(col0.text.split(" ")[1])
-        ou_open  = float(col2.text)
+        current, opening_ou = cells[0].text, float(cells[2].text)
+        current_ou = float(current.split(" ")[1])
 
         odds = {}
-        odds['vegas_ou_total'] = round(ou_total, 1)
-        odds['vegas_ou_open']  = round(ou_open,  1)
+        odds['vegas_ou_opening'] = round(opening_ou, 1)
+        odds['vegas_ou_total']   = round(current_ou, 1)
         return odds
 
     def fetch_all(self, game_date_dashes, force=False):
@@ -292,8 +352,8 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         game_date_nodashes = game_date_dashes.replace("-", "")
 
         # ----------------------
-        # Step 1: Get daily schedule and compile links to each game
-        # (must match backtester _get_schedule_fpath_json())
+        # Step 1: Get daily schedule, compile game info plus links to each game
+        # (the name below must match backtester _get_schedule_fpath_json())
         k = "trschedule"
         fpath = self._get_fpath_json(k, game_date_nodashes)
         if (force is True) or (os.path.exists(fpath) is False):
@@ -313,11 +373,7 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 # No games on this date
                 sched_json = []
 
-            # Step 1b: export schedule data
-            if self.nohush:
-                print(f"Dumping TeamRankings schedule data to {fpath}")
-            with open(fpath, 'w') as f:
-                json.dump(sched_json, f, indent=4)
+            # Don't export schedule to JSON file yet, first get odds data
 
         else:
             # Load existing schedule data
@@ -325,25 +381,50 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 sched_json = json.load(f)
 
         # ----------------------
-        # Step 2: Visit each game's link (or two) to get results, odds
+        # Step 2: Gather results and odds for each game (requires visiting multiple links)
         for game in sched_json:
+            if 'odds' in game.keys():
+                # Game already has odds data in it, so skip
+                continue
+
+            if self.nohush:
+                print(f"Retrieving TeamRankings.com outcome data for {game['away_team']} @ {game['home_team']} ({game['game_date']})")
+
             game_url = game['game_url']
+
+            # Get the game page, to get the final score
+            g_src = self._get_page_html(game_url)
+            g_json = self._html2json_g(g_src)
+
+            # Game outcome gets copied directly into game dict
+            for k, v in g_json.items():
+                game[k] = v
 
             if self.nohush:
                 print(f"Retrieving TeamRankings.com odds data for {game['away_team']} @ {game['home_team']} ({game['game_date']})")
 
-            ml_fpath = self._get_fpath_json("daily_ml", game_date_nodashes)
+            # Now get each odds page
             ml_src = self._get_page_html(game_url + "/money-line-movement")
             ml_json = self._html2json_ml(ml_src)
 
-            sp_fpath = self._get_fpath_json("daily_sp", game_date_nodashes)
             sp_src = self._get_page_html(game_url + "/spread-movement")
             sp_json = self._html2json_sp(sp_src)
 
-            ou_fpath = self._get_fpath_json("daily_ou", game_date_nodashes)
             ou_src = self._get_page_html(game_url + "/over-under-movement")
             ou_json = self._html2json_ou(ou_src)
 
+            # Game odds get copied into "odds" sub-dict
+            game['odds'] = {}
+            game['odds']['moneyline'] = ml_json
+            game['odds']['spread']    = sp_json
+            game['odds']['ou']        = ou_json
 
+            # Save some time by dumping schedule each time we have added new odds data to one game
+            with open(fpath, 'w') as f:
+                json.dump(sched_json, f, indent=4)
 
+        # ----------------------
+        # Step 3: Final dump of game info plus odds data
+        with open(fpath, 'w') as f:
+            json.dump(sched_json, f, indent=4)
 
