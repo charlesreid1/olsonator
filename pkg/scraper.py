@@ -265,8 +265,12 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 away_row, home_row = rows[0], rows[1]
 
                 away_cols, home_cols = away_row.find_all('td'), home_row.find_all('td')
-                away_score = int(away_cols[3].text)
-                home_score = int(home_cols[3].text)
+                try:
+                    away_score = int(away_cols[3].text)
+                    home_score = int(home_cols[3].text)
+                except IndexError:
+                    msg = "Error: could not find final score of game"
+                    raise TeamRankingsParseError(msg)
 
         outcome = {}
         outcome['away_score'] = away_score
@@ -389,41 +393,51 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 # Game already has odds data in it, so skip
                 continue
 
+            game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             if self.nohush:
-                print(f"Retrieving TeamRankings.com outcome data for {game['away_team']} @ {game['home_team']} ({game['game_date']})")
+                print(f"Retrieving TeamRankings.com outcome data for {game_descr}")
 
             game_url = game['game_url']
 
-            # Get the game page, to get the final score
-            g_src = self._get_page_html(game_url)
-            g_json = self._html2json_g(g_src)
+            try:
+                # Get the game page, to get the final score
+                g_src = self._get_page_html(game_url)
+                g_json = self._html2json_g(g_src)
+            except (AttributeError, TeamRankingsParseError):
+                print(f"Failed to find game outcome for {game_descr}")
+                pass
 
             # Game outcome gets copied directly into game dict
             for k, v in g_json.items():
                 game[k] = v
 
             if self.nohush:
-                print(f"Retrieving TeamRankings.com odds data for {game['away_team']} @ {game['home_team']} ({game['game_date']})")
+                print(f"Retrieving TeamRankings.com odds data for {game_descr}")
 
-            # Now get each odds page
-            ml_src = self._get_page_html(game_url + "/money-line-movement")
-            ml_json = self._html2json_ml(ml_src)
+            try:
+                # Now get each odds page
+                ml_src = self._get_page_html(game_url + "/money-line-movement")
+                ml_json = self._html2json_ml(ml_src)
 
-            sp_src = self._get_page_html(game_url + "/spread-movement")
-            sp_json = self._html2json_sp(sp_src)
+                sp_src = self._get_page_html(game_url + "/spread-movement")
+                sp_json = self._html2json_sp(sp_src)
 
-            ou_src = self._get_page_html(game_url + "/over-under-movement")
-            ou_json = self._html2json_ou(ou_src)
+                ou_src = self._get_page_html(game_url + "/over-under-movement")
+                ou_json = self._html2json_ou(ou_src)
 
-            # Game odds get copied into "odds" sub-dict
-            game['odds'] = {}
-            game['odds']['moneyline'] = ml_json
-            game['odds']['spread']    = sp_json
-            game['odds']['ou']        = ou_json
+                # Game odds get copied into "odds" sub-dict
+                game['odds'] = {}
+                game['odds']['moneyline'] = ml_json
+                game['odds']['spread']    = sp_json
+                game['odds']['ou']        = ou_json
 
-            # Save some time by dumping schedule each time we have added new odds data to one game
-            with open(fpath, 'w') as f:
-                json.dump(sched_json, f, indent=4)
+                # Save some time by dumping schedule each time we have added new odds data to one game
+                with open(fpath, 'w') as f:
+                    json.dump(sched_json, f, indent=4)
+
+            except (AttributeError, TeamRankingsParseError):
+                print(f"Failed to find odds for {game_descr}")
+                pass
 
         # ----------------------
         # Step 3: Final dump of game info plus odds data
