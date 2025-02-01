@@ -104,7 +104,7 @@ def normalize_to_teamrankings_names(team_name):
     elif is_donch_team(team_name):
         return donch2teamrankings(team_name)
     elif is_kenpom_team(team_name):
-        return kenpom2teamrankings(donch2teamrankings(team_name))
+        return donch2teamrankings(kenpom2donch(team_name))
     else:
         raise TeamNotFoundException(f"Could not normalize to TeamRankings name: {team_name}")
 
@@ -119,7 +119,7 @@ def normalize_to_donchess_names(team_name):
     elif is_teamrankings_team(team_name):
         return teamrankings2donch(team_name)
     elif is_kenpom_team(team_name):
-        return kenpom2donch(donch2teamrankings(team_name))
+        return kenpom2donch(team_name)
     else:
         raise TeamNotFoundException(f"Could not normalize to Donchess name: {team_name}")
 
