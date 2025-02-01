@@ -120,11 +120,16 @@ class Backtester(object):
                     print(f"Loading schedule data from {fpath}")
                 with open(fpath, 'r') as f:
                     today_data = json.load(f)
+                if 'odds' not in today_data[-1].keys():
+                    # We populated schedule data, but did not finish populating odds data
+                    # (b/c last game in list does not have any odds data)
+                    # Raise FileNotFoundError to force fetch_all() to run, and populate those odds
+                    raise FileNotFoundError("")
             except json.decoder.JSONDecodeError:
                 print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
             except FileNotFoundError:
                 if self.nohush:
-                    print(f"No file at {fpath}, creating ourselves")
+                    print(f"Missing or incomplete file at {fpath}, creating ourselves")
                 ts.fetch_all(date)
 
     '''
