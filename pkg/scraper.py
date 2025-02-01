@@ -59,6 +59,7 @@ class TeamRankingsDataScraper(object):
         (This is much faster than using Selenium, so use it when possible)
         """
         resp = requests.get(url)
+        time.sleep(2)
         src = resp.content
         return src
 
@@ -92,9 +93,10 @@ class TeamRankingsDataScraper(object):
     def _get_datatable(self, html):
         """Get the main DataTables table. Useful b/c we never need the soup otherwise."""
         soup = BeautifulSoup(html, 'html.parser')
-        table = soup.find('table', attrs={"id": "DataTables_Table_0"})
+        #table = soup.find('table', attrs={"id": "DataTables_Table_0"})
+        table = soup.find('table', attrs={"class": "datatable"})
         if table is None:
-            raise TeamRankingsTableNotFoundException("data table cannot be found???")
+            raise TeamRankingsParseError("Data table cannot be found on page")
         return table
 
     def _html2json(self, html, prefix):
@@ -219,9 +221,8 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 elif j==3:
                     # time (always eastern time, format is "9:00 PM")
                     # convert to west coast time, format HHMM
-                    dt = datetime.strptime(col.text, "%I:%M %p") - timedelta(hours=3)
+                    dt = datetime.strptime(col.text.strip(), "%I:%M %p") - timedelta(hours=3)
                     game['game_time'] = dt.strftime("%H%M")
-                    pass
 
             if add_game:
                 schedule.append(game)
