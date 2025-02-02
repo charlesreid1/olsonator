@@ -5,12 +5,12 @@ import copy
 import statistics
 import simplejson as json
 from datetime import datetime, timedelta
-import cbbpy.mens_scraper as CbbpyScraper
+#import cbbpy.mens_scraper as CbbpyScraper
 
 from .model import ModelBase
 from .scraper import (
     TeamRankingsDataScraper,
-    # TeamRankingsScheduleScraper,
+    TeamRankingsScheduleScraper,
 )
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import (
@@ -29,11 +29,11 @@ class Backtester(object):
     Class that manages the entire backtesting process.
     This takes as input a model to backtest,
     a reqired start/end date, and an optional team name.
-    If 
+    If
     """
     def __init__(
-        self, 
-        model: ModelBase, 
+        self,
+        model: ModelBase,
         start_date: str,
         end_date: str,
         teams: list = None
@@ -88,7 +88,7 @@ class Backtester(object):
 
     def _get_schedule_fpath_json(self, stamp):
         """Get path to JSON file for schedule data for given date stamp"""
-        fname = "schedule_" + stamp + ".json"
+        fname = "trschedule_" + stamp + ".json"
         fpath = os.path.join(self.sched_datadir, fname)
         return fpath
 
@@ -105,12 +105,56 @@ class Backtester(object):
         Get (scrape) schedule data (everything required for
         model prediction input) for the given date.
 
+        Uses TeamRankings.com for schedule data
+        """
+        schedule_data = []
+
+        ts = TeamRankingsScheduleScraper(self.model_parameters)
+
+        for date in self.all_dates:
+            today_data = []
+            date_nodashes = date.replace("-", "")
+            fpath = self._get_schedule_fpath_json(date_nodashes)
+
+            # Try to load 
+            try:
+                if self.nohush:
+                    print(f"Loading schedule data from {fpath}")
+                with open(fpath, 'r') as f:
+                    today_data = json.load(f)
+                if len(today_data)==0 or 'odds' not in today_data[-1].keys():
+                    # We populated schedule data, but did not finish populating odds data
+                    # (b/c last game in list does not have any odds data)
+                    # Raise FileNotFoundError to force fetch_all() to run, and populate those odds
+                    raise FileNotFoundError("")
+                schedule_data += today_data
+
+            except json.decoder.JSONDecodeError:
+                print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
+
+            except FileNotFoundError:
+                if self.nohush:
+                    print(f"Missing or incomplete file at {fpath}, creating ourselves")
+                ts.fetch_all(date)
+
+                with open(fpath, 'r') as f:
+                    today_data = json.load(f)
+                schedule_data.append(today_data)
+
+        return schedule_data
+
+    '''
+    def _old_get_schedule_data(self):
+        """
+        Get (scrape) schedule data (everything required for
+        model prediction input) for the given date.
+
         This uses the NCAA API (via CBBpy) to get schedule data.
 
         Use the stashed start/end dates from constructor.
         """
         schedule_data = []
-        
+
         def _flatten(inputd):
             d = {}
             for k,v in inputd.items():
@@ -121,7 +165,7 @@ class Backtester(object):
         # Do this one day at a time for efficiency
         for date in self.all_dates:
             today_data = []
-            fpath = self._get_schedule_fpath_json(date) 
+            fpath = self._get_schedule_fpath_json(date)
             try:
                 if self.nohush:
                     print(f"Loading schedule data from {fpath}")
@@ -226,6 +270,7 @@ class Backtester(object):
             schedule_data += today_data
 
         return schedule_data
+    '''
 
     def prepare(self):
         """
@@ -234,16 +279,17 @@ class Backtester(object):
         backtest.
         """
         # Procedure:
-        # - check game date requested
         # - create instance of scraper class
-        # - pass it a date and ask it to fetch data for that date
-        # - child class:
+        # - iterate over each date in this backtest
+        # - pass that date to the scraper class
+        # - scraper class:
         #    - uses selenium
         #    - requests pre-set urls
-        #    - scrapes resulting pags for tempo, off eff, def eff
-        #    - dumps to file
+        #    - scrapes resulting pages
+        #    - dumps to json file
         # - that's it, we're done.
-        # - (we don't want to handle any results here)
+        # - (we do not process/handle results here)
+        # - (we do not dump anything to files)
 
         tr = TeamRankingsDataScraper(self.model_parameters)
 
@@ -255,9 +301,9 @@ class Backtester(object):
     def backtest(self, test_name):
         """
         Obtain a schedule of game information, incl results,
-        on each requested game in the date range. 
+        on each requested game in the date range.
         Iterate over each game to generate a prediction.
-        
+
         Use the test_name parameter to save the results to a file.
         """
         # Procedure (for now):
@@ -267,16 +313,16 @@ class Backtester(object):
         #   - use the NCAA API via cbbpy
         #   - stash the resulting games schedule in a json file
         #   - have a method to get that json file (prefix + date)
-        # 
+        #
         # - once we have schedule, collect info:
         #   - real away spread
         #   - vegas away spread,
         #   - model away spread,
-        # 
+        #
         #   - real away/home/total
         #   - vegas over/under total (<-- not readily available)
         #   - model predictions (away/home/total)
-        # 
+        #
         #   - vegas moneyline (<-- not readily available??)
         #   - model euclidean win% projection
 
@@ -286,13 +332,21 @@ class Backtester(object):
         if self.nohush:
             print(f"Starting the backtest")
 
+        if len(schedule_data)==0:
+            raise Exception("No schedule data")
+
         results = []
         for game in schedule_data:
+            try:
+                game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
+            except:
+                game_descr = "BONK"
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
             if len(self.teams)==0 or our_team:
                 try:
                     away_points, home_points = model.predict(game)
                 except (TeamNotFoundException, ModelPredictException):
+                    # Note: first few days of season, no off/def data, so no predictions
                     continue
                 item = copy.deepcopy(game)
                 item['predicted_away_points'] = round(away_points,1)
@@ -336,7 +390,7 @@ class Backtester(object):
             ndays = (end-start).days
             print(f"\tN days:\t\t\t{ndays}")
 
-            # Number of games 
+            # Number of games
             print(f"\tN games total:\t\t{len(schedule_data)}")
             print(f"\tN games analyzed:\t{len(results)}")
 
@@ -353,8 +407,16 @@ class Backtester(object):
 
             for item in results:
 
+                if 'odds' in item:
+                    if 'spread' in item['odds']:
+                        if 'vegas_away_spread' in item['odds']['spread']:
+                            item['vegas_away_spread'] = item['odds']['spread']['vegas_away_spread']
+
                 if 'vegas_away_spread' not in item or item['vegas_away_spread'] is None:
                     continue
+
+                if 'away_spread' not in item:
+                    item['away_spread'] = item['home_score'] - item['away_score']
 
                 e = item['vegas_away_spread'] - item['away_spread']
                 vegas_spread_e.append(e*e)
@@ -366,7 +428,7 @@ class Backtester(object):
                 # vegas says -6
                 # prediction says -4
                 # we would have bet against the spread being so high (-), and lost
-                # 
+                #
                 # Example: real away spread is +6
                 # vegas says +2
                 # prediction says +4
@@ -389,7 +451,7 @@ class Backtester(object):
 
                 # Model Spread RMSE
                 print(f"\tModel Spread RMSE:\t{round(math.sqrt(model_spread_mse),1)}")
-            
+
             if len(vegas_spread_e)>0:
                 vegas_spread_mse = statistics.mean(vegas_spread_e)
 
@@ -427,9 +489,9 @@ class Backtester(object):
         # - ask for teamrankings schedule page
         # - (similar to donchess, has link to each game, with page for each)
         # - (would be nice to have odds on that page, but have to dig into each...)
-        # 
+        #
         # game pages look like https://www.teamrankings.com/ncaa-basketball/matchup/mountaineers-red-wolves-2025-01-23
-        # 
+        #
         # /spread-movement - page with final vegas spread
         # /box-score - page with final score
 
