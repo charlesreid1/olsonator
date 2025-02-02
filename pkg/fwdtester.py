@@ -6,7 +6,9 @@ from datetime import datetime, timedelta
 
 from .backtester import Backtester
 from .model import ModelBase
+from .constants import CONFERENCES, CONFIDENCES
 from .errors import TeamNotFoundException, ModelPredictException
+from .teams import normalize_to_donchess_names
 from .utils import repl
 
 
@@ -39,6 +41,9 @@ class Forwardtester(Backtester):
 
         self.fwdtst_datadir = os.path.join(self.datadir, 'fwdtest', 'json')
 
+        if not os.path.exists(self.fwdtst_datadir):
+            pathlib.Path(self.fwdtst_datadir).mkdir(parents=True)
+
     def _get_schedule_fpath_json(self, stamp):
         """Get path to JSON file for schedule data for given date stamp"""
         fname = "todtom_" + stamp + ".json"
@@ -52,6 +57,9 @@ class Forwardtester(Backtester):
         fname = test_name + "_" + stamp + ".json"
         fpath = os.path.join(self.fwdtst_datadir, fname)
         return fpath
+
+    def backtest(self, *args, **kwargs):
+        raise NotImplementedError("Forwardtester class does not implement a backtest() method")
 
     def forwardtest(self, test_name):
         """
@@ -122,17 +130,19 @@ class Forwardtester(Backtester):
             print(f"\tTeams:\t\t\t{tms}")
             print("")
 
-            unique_times = {g['game_time'] for g in schedule_data}
+            unique_times = {g['game_time'] for g in results}
             for start_time in sorted(list(unique_times)):
                 print("")
-                print(f"Start time: {start_time} Pacific")
+                print(f"{start_time} Pacific:")
+                print("--------------")
 
-                window_games = [g for g in schedule_data if g['game_time']==start_time]
+                window_games = [g for g in results if g['game_time']==start_time]
+                window_games.sort(key = lambda x: x['away_team'])
 
                 for game in window_games:
                 
                     # For each game, print the matchup, and the expected spread for the dog
-                    matchup = f"{game['away_team']} @ {game['home_team']}"
+                    matchup = f"{game['away_team']} @ {game['home_team']}:"
                     if game['predicted_away_points'] < game['predicted_home_points']:
                         spread = game['predicted_away_spread']
                         dog_spread = f"{game['away_team']} (+{spread})"
@@ -140,7 +150,17 @@ class Forwardtester(Backtester):
                         spread = -1*game['predicted_away_spread']
                         dog_spread = f"{game['home_team']} (+{spread})"
 
-                    print(f"{matchup:42s}\t{dog_spread}")
+                    ateam = game['away_team']
+                    aconference = CONFERENCES[normalize_to_donchess_names(ateam)]
+                    aconfidence = CONFIDENCES[aconference]
 
+                    hteam = game['home_team']
+                    hconference = CONFERENCES[normalize_to_donchess_names(hteam)]
+                    hconfidence = CONFIDENCES[hconference]
 
+                    conf = aconfidence + hconfidence
 
+                    print(f"{matchup:24s}\t{dog_spread:20s}\t{conf}")
+
+            print("")
+            print("")
