@@ -44,7 +44,7 @@ def backtest():
     model = NCAABModel(model_params)
 
     # Run a backtest for all teams
-    backtester = Backtester(model, start_date="2024-11-04", end_date="2025-01-28")
+    backtester = Backtester(model, start_date="2024-11-04", end_date="2025-02-01")
     backtester.prepare()
     backtester.backtest(test_name="backtest_all")
 
