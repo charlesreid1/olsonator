@@ -265,8 +265,12 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 away_row, home_row = rows[0], rows[1]
 
                 away_cols, home_cols = away_row.find_all('td'), home_row.find_all('td')
-                away_score = int(away_cols[3].text)
-                home_score = int(home_cols[3].text)
+                try:
+                    away_score = int(away_cols[3].text)
+                    home_score = int(home_cols[3].text)
+                except IndexError:
+                    msg = "Could not find game outcome in table"
+                    raise TeamRankingsParseError(msg)
 
         outcome = {}
         outcome['away_score'] = away_score
@@ -286,7 +290,8 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
             try:
                 table = div.find('table')
             except AttributeError:
-                raise TeamRankingsParseError("Could not find moneyline odds table")
+                msg = "Could not find moneyline odds table"
+                raise TeamRankingsParseError(msg)
 
             cells = table.find('tbody').find('tr').find_all('td')
             
@@ -393,21 +398,29 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 # Game already has odds data in it, so skip
                 continue
 
+            game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             if self.nohush:
-                print(f"Retrieving TeamRankings.com outcome data for {game['away_team']} @ {game['home_team']} ({game['game_date']})")
+                print(f"Retrieving TeamRankings.com outcome data for {game_descr}")
 
             game_url = game['game_url']
 
             # Get the game page, to get the final score
             g_src = self._get_page_html(game_url)
-            g_json = self._html2json_g(g_src)
+
+            try:
+                g_json = self._html2json_g(g_src)
+            except TeamRankingsParseError:
+                # Could not find outcome of game
+                if self.nohush:
+                    print(f"Could not find outcome of game {game_descr}, skipping")
+                continue
 
             # Game outcome gets copied directly into game dict
             for k, v in g_json.items():
                 game[k] = v
 
             if self.nohush:
-                print(f"Retrieving TeamRankings.com odds data for {game['away_team']} @ {game['home_team']} ({game['game_date']})")
+                print(f"Retrieving TeamRankings.com odds data for {game_descr}")
 
             # Now get each odds page
             try:
