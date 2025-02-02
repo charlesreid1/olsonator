@@ -337,7 +337,10 @@ class Backtester(object):
 
         results = []
         for game in schedule_data:
-            game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
+            try:
+                game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
+            except:
+                game_descr = "BONK"
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
             if len(self.teams)==0 or our_team:
                 try:
