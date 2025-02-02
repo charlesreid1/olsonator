@@ -115,23 +115,33 @@ class Backtester(object):
             today_data = []
             date_nodashes = date.replace("-", "")
             fpath = self._get_schedule_fpath_json(date_nodashes)
+
+            # Try to load 
             try:
                 if self.nohush:
                     print(f"Loading schedule data from {fpath}")
                 with open(fpath, 'r') as f:
                     today_data = json.load(f)
-                if 'odds' not in today_data[-1].keys():
+                if len(today_data)==0 or 'odds' not in today_data[-1].keys():
                     # We populated schedule data, but did not finish populating odds data
                     # (b/c last game in list does not have any odds data)
                     # Raise FileNotFoundError to force fetch_all() to run, and populate those odds
                     raise FileNotFoundError("")
+                schedule_data += today_data
+
             except json.decoder.JSONDecodeError:
                 print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
+
             except FileNotFoundError:
                 if self.nohush:
                     print(f"Missing or incomplete file at {fpath}, creating ourselves")
+                ts.fetch_all(date)
 
-            ts.fetch_all(date)
+                with open(fpath, 'r') as f:
+                    today_data = json.load(f)
+                schedule_data.append(today_data)
+
+        return schedule_data
 
     '''
     def _old_get_schedule_data(self):
@@ -327,11 +337,13 @@ class Backtester(object):
 
         results = []
         for game in schedule_data:
+            game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
             if len(self.teams)==0 or our_team:
                 try:
                     away_points, home_points = model.predict(game)
                 except (TeamNotFoundException, ModelPredictException):
+                    # Note: first few days of season, no off/def data, so no predictions
                     continue
                 item = copy.deepcopy(game)
                 item['predicted_away_points'] = round(away_points,1)
@@ -392,8 +404,16 @@ class Backtester(object):
 
             for item in results:
 
+                if 'odds' in item:
+                    if 'spread' in item['odds']:
+                        if 'vegas_away_spread' in item['odds']['spread']:
+                            item['vegas_away_spread'] = item['odds']['spread']['vegas_away_spread']
+
                 if 'vegas_away_spread' not in item or item['vegas_away_spread'] is None:
                     continue
+
+                if 'away_spread' not in item:
+                    item['away_spread'] = item['home_score'] - item['away_score']
 
                 e = item['vegas_away_spread'] - item['away_spread']
                 vegas_spread_e.append(e*e)
