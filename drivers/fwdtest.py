@@ -35,7 +35,7 @@ def fwdtest():
     # Run a backtest for all teams
     fwd = Forwardtester(model, today=True, tomorrow=False)
     fwd.prepare()
-    fwd.backtest(test_name="fwd_all")
+    fwd.forwardtest(test_name="fwd_all")
 
 
 if __name__=="__main__":
