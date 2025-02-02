@@ -60,7 +60,7 @@ class TeamRankingsDataScraper(object):
         (This is much faster than using Selenium, so use it when possible)
         """
         resp = requests.get(url)
-        time.sleep(2)
+        time.sleep(1)
         src = resp.content
         return src
 
