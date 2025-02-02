@@ -340,7 +340,9 @@ class Backtester(object):
             try:
                 game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             except:
+                # I don't know what's going on, this happens a few times per season
                 game_descr = "BONK"
+                continue
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
             if len(self.teams)==0 or our_team:
                 try:
