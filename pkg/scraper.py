@@ -174,6 +174,7 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
 
     urls = {
         "trschedule":   "https://www.teamrankings.com/ncb/schedules",
+        "todtom":       "https://www.teamrankings.com/ncb/schedules",
     }
     data_subdir = 'schedule'
 
@@ -382,12 +383,12 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         scrape the schedule data from the page, and export to JSON file.
         """
         dt = datetime.strptime(game_date_dashes, "%Y-%m-%d")
-        t = datetime.now()
+        y = datetime.now() - timedelta(days=1)
 
         # If we are requesting sched data for today/tomorrow,
         # we won't have outcomes, and sched data goes in a different file
         todtom = False
-        if dt > t:
+        if dt > y:
             todtom = True
 
         game_date_nodashes = game_date_dashes.replace("-", "")
@@ -435,14 +436,14 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
 
             game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
 
+            game_url = game['game_url']
+
             # -------------
             # 2a) Results
             # If today/tomorrow game, no need to get game outcome
             if not todtom:
                 if self.nohush:
                     print(f"Retrieving TeamRankings.com outcome data for {game_descr}")
-
-                game_url = game['game_url']
 
                 # Get the game page, to get the final score
                 g_src = self._get_page_html(game_url)
