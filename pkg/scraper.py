@@ -140,6 +140,13 @@ class TeamRankingsDataScraper(object):
         For the given date, download corresponding HTML pages with team data,
         scrape the team data from the page, and export to JSON file.
         """
+        dt = datetime.strptime(game_date_dashes, "%Y-%m-%d")
+        t = datetime.now()
+        # If we are requesting predictions for tomorrow, it will
+        # nominally ask for stats from tomorrow. Use today's date instead.
+        if dt > t:
+            game_date_dashes = t.strftime("%Y-%m-%d")
+
         game_date_nodashes = game_date_dashes.replace("-", "")
         for k in self.urls.keys():
             fpath = self._get_fpath_json(k, game_date_nodashes)
@@ -374,12 +381,26 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         For the given date, download corresponding HTML pages with schedule data,
         scrape the schedule data from the page, and export to JSON file.
         """
+        dt = datetime.strptime(game_date_dashes, "%Y-%m-%d")
+        t = datetime.now()
+
+        # If we are requesting sched data for today/tomorrow,
+        # we won't have outcomes, and sched data goes in a different file
+        todtom = False
+        if dt > t:
+            todtom = True
+
         game_date_nodashes = game_date_dashes.replace("-", "")
 
         # ----------------------
         # Step 1: Get daily schedule, compile game info plus links to each game
         # (the name below must match backtester _get_schedule_fpath_json())
-        k = "trschedule"
+        if todtom:
+            # This is the prefix used for game data when we don't yet know the outcome (fwdtest)
+            k = "todtom"
+        else:
+            # This is the prefix used for game data when we know the outcome (backtest)
+            k = "trschedule"
         fpath = self._get_fpath_json(k, game_date_nodashes)
         if (force is True) or (os.path.exists(fpath) is False):
             url = self.urls[k]
@@ -413,25 +434,33 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
                 continue
 
             game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
-            if self.nohush:
-                print(f"Retrieving TeamRankings.com outcome data for {game_descr}")
 
-            game_url = game['game_url']
-
-            # Get the game page, to get the final score
-            g_src = self._get_page_html(game_url)
-
-            try:
-                g_json = self._html2json_g(g_src)
-            except TeamRankingsParseError:
-                # Could not find outcome of game
+            # -------------
+            # 2a) Results
+            # If today/tomorrow game, no need to get game outcome
+            if not todtom:
                 if self.nohush:
-                    print(f"Could not find outcome of game {game_descr}, skipping")
-                continue
+                    print(f"Retrieving TeamRankings.com outcome data for {game_descr}")
 
-            # Game outcome gets copied directly into game dict
-            for k, v in g_json.items():
-                game[k] = v
+                game_url = game['game_url']
+
+                # Get the game page, to get the final score
+                g_src = self._get_page_html(game_url)
+
+                try:
+                    g_json = self._html2json_g(g_src)
+                except TeamRankingsParseError:
+                    # Could not find outcome of game
+                    if self.nohush:
+                        print(f"Could not find outcome of game {game_descr}, skipping")
+                    continue
+
+                # Game outcome gets copied directly into game dict
+                for k, v in g_json.items():
+                    game[k] = v
+
+            # -------------
+            # 2b) Odds
 
             if self.nohush:
                 print(f"Retrieving TeamRankings.com odds data for {game_descr}")
