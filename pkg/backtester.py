@@ -130,7 +130,8 @@ class Backtester(object):
             except FileNotFoundError:
                 if self.nohush:
                     print(f"Missing or incomplete file at {fpath}, creating ourselves")
-                ts.fetch_all(date)
+
+            ts.fetch_all(date)
 
     '''
     def _old_get_schedule_data(self):
@@ -320,6 +321,9 @@ class Backtester(object):
 
         if self.nohush:
             print(f"Starting the backtest")
+
+        if len(schedule_data)==0:
+            raise Exception("No schedule data")
 
         results = []
         for game in schedule_data:
