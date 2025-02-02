@@ -50,7 +50,8 @@ class TeamRankingsDataScraper(object):
         return fpath
 
     def _get_page_html(self, url):
-        return self._get_page_html_requests(url)
+        # If we try to use requests, none of the tables load, and all data is None
+        return self._get_page_html_selenium(url)
 
     def _get_page_html_requests(self, url):
         """
@@ -169,6 +170,9 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
     }
     data_subdir = 'schedule'
 
+    def _get_page_html(self, url):
+        return self._get_page_html_requests(url)
+
     def _html2json_sched(self, html):
         """Extract schedule data from HTML and return in JSON format."""
         table = self._get_datatable(html)
@@ -177,7 +181,7 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
 
         table_rows = table.find('tbody').find_all('tr')
 
-        if "No data available" in table_rows[0].text:
+        if len(table_rows)==0 or "No data available" in table_rows[0].text:
             msg = "No data found on schedule page, specified date may be invalid"
             raise TeamRankingsParseError(msg)
 
@@ -313,7 +317,12 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         away_abbr, home_abbr = self._get_team_abbrs_matchup_menu(soup)
 
         table = soup.find('table', attrs={"class": "movement-table"})
-        cells = table.find('tr').find_all('td')
+
+        try:
+            cells = table.find('tr').find_all('td')
+        except AttributeError:
+            msg = "Could not find spread odds table"
+            raise TeamRankingsParseError(msg)
 
         current, opening_sp = cells[0].text, cells[2].text
         k, current_sp = current.split(" ")
@@ -344,7 +353,12 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         away_abbr, home_abbr = self._get_team_abbrs_matchup_menu(soup)
 
         table = soup.find('table', attrs={"class": "movement-table"})
-        cells = table.find('tr').find_all('td')
+        try:
+            cells = table.find('tr').find_all('td')
+        except AttributeError:
+            msg = "Could not find over/under odds table"
+            raise TeamRankingsParseError(msg)
+
 
         # Format "Total 165.5"
         current, opening_ou = cells[0].text, float(cells[2].text)
