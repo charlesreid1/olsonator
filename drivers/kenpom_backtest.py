@@ -36,7 +36,7 @@ def backtest():
     # Need a Kenpom backtester that creates a Kenpom scraper
     backtester = KenpomBacktester(model, start_date="2024-11-04", end_date="2025-02-01")
     backtester.prepare()
-    backtester.backtest(test_name="backtest_all")
+    backtester.backtest(test_name="backtest_all_kenpom")
 
 
 if __name__=="__main__":
