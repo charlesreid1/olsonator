@@ -38,9 +38,9 @@ def backtest():
 def do_backtests(confs, model):
     for c in confs:
         conf_teams = [k for k,v in CONFERENCES.items() if v == c]
-        backtester = KenpomBacktester(model, start_date="2024-11-04", end_date="2025-01-31", teams=conf_teams)
+        backtester = KenpomBacktester(model, start_date="2024-11-04", end_date="2025-02-01", teams=conf_teams)
         backtester.prepare()
-        backtester.backtest(test_name=f"backtest_{c}")
+        backtester.backtest(test_name=f"backtest_kenpom_{c}")
 
 
 def print_teams(confs):
