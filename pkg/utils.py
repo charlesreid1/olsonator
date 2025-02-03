@@ -59,6 +59,12 @@ def get_utc_offset_int(timezone_name):
 
 
 def american2decimal(s):
+    if type(s)==int:
+        if s>0:
+            s = "+" + str(s)
+        else:
+            s = str(s)
+
     sign = s[0]
     mag = float(s[1:])
     p = 0
@@ -89,6 +95,12 @@ def decimal2american(d):
 
 def bet_win_american(bet_amt, american_odds):
     """Return the amount a bet would win, given the bet amount and american odds"""
+    if type(american_odds)==int:
+        if american_odds>0:
+            american_odds = "+" + str(american_odds)
+        else:
+            american_odds = str(american_odds)
+
     sign = american_odds[0]
     if sign not in ["+", "-"]:
         msg = f"Error: bet_win_american() must take American odds starting with + or -, you provided {american_odds}"
