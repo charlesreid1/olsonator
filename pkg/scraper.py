@@ -508,10 +508,16 @@ class KenpomDataScraper(TeamRankingsDataScraper):
     def _get_fpath_json(self):
         """
         Get the filename + path of the JSON file containing
-        team raning data
+        kenpom team ranking data.
 
-        prefix should be a stat name (like tempo)
-        stamp should be a YYYYMMDD datestamp
+        Because kenpom data is updated each day and not available by date,
+        we only maintain one file of kenpom ratings, and keep it updated
+        on a rolling basis. 
+
+        Once we get data for further back-testing, this should be updated
+        to be one Kenpom file per year.
+
+        (Kenpom does provide snapshot from end of each season.)
         """
         fname = "kenpom_data.json"
         dpath = os.path.join(self.model_parameters['data_directory'], 'kenpom')
@@ -520,7 +526,11 @@ class KenpomDataScraper(TeamRankingsDataScraper):
         return fpath
 
     def _html2json(self, html):
-        """Extract data from HTML and send to JSON."""
+        """
+        Extract data from HTML and send to JSON.
+        This scrapes the HTML to compile a list of dictionaries,
+        one key per Kenpom column.
+        """
         soup = BeautifulSoup(html, 'html.parser')
 
         # Prep data structure
