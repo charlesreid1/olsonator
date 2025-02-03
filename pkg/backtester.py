@@ -406,7 +406,15 @@ class Backtester(object):
             model_spread_e = []
             model_spread_vsvegas = [0, 0]
 
+            # Keep track of each day's W/L record, so we can compile best/worst
+            oneday_vsvegas = {}
+            dates = sorted(list({j['game_date'] for j in results}))
+            for date in dates:
+                oneday_vsvegas[date] = [0, 0]
+
             for item in results:
+
+                date = item['game_date']
 
                 if 'odds' in item:
                     if 'spread' in item['odds']:
@@ -443,9 +451,11 @@ class Backtester(object):
                 if (s1>0)==(s2>0):
                     # Won the bet
                     model_spread_vsvegas[0] += 1
+                    oneday_vsvegas[date][0] += 1
                 else:
                     # Lost the bet
                     model_spread_vsvegas[1] += 1
+                    oneday_vsvegas[date][1] += 1
 
             if len(model_spread_e)>0:
                 model_spread_mse = statistics.mean(model_spread_e)
@@ -470,6 +480,23 @@ class Backtester(object):
 
                 # Win Pct vs Vegas
                 print(f"\tW-L% vs Vegas:\t\t{win_pct}%")
+
+                best_oneday_vsvegas = [0, 0]
+                best_oneday_wpct = 0
+                worst_oneday_vsvegas = [0, 0]
+                worst_oneday_wpct = 1
+                for date, wl in oneday_vsvegas.items():
+                    wpct = wl[0]/(wl[0]+wl[1])
+                    if wpct > best_oneday_wpct and wl[0] > best_oneday_vsvegas[0]:
+                        best_oneday_vsvegas = wl
+                        best_oneday_wpct = wpct
+                    if wpct < worst_oneday_wpct and wl[1] > worst_oneday_vsvegas[1]:
+                        worst_oneday_vsvegas = wl
+                        worst_oneday_wpct = wpct
+
+                # Best and worst one-day W-L
+                print(f"\tBest 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
+                print(f"\tWorst 1-day W-L:\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
 
                 # ROI vs Vegas (assuming -110 odds for every bet)
                 amount = 110
