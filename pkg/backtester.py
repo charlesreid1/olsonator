@@ -487,10 +487,10 @@ class Backtester(object):
                 worst_oneday_wpct = 1
                 for date, wl in oneday_vsvegas.items():
                     wpct = wl[0]/(wl[0]+wl[1])
-                    if wpct > best_oneday_wpct and wl[0] > best_oneday_vsvegas[0]:
+                    if wl[0] > best_oneday_vsvegas[0]:
                         best_oneday_vsvegas = wl
                         best_oneday_wpct = wpct
-                    if wpct < worst_oneday_wpct and wl[1] > worst_oneday_vsvegas[1]:
+                    if wl[1] > worst_oneday_vsvegas[1]:
                         worst_oneday_vsvegas = wl
                         worst_oneday_wpct = wpct
 
