@@ -371,7 +371,7 @@ class NCAABModel(ModelBase):
         e_home_points = e_tempo*(e_home_off_output/100.0)
 
         # Look for too big/too small spreads BEFORE adding modifiers
-        SPREAD_TOO_NARROW = 1
+        SPREAD_TOO_NARROW = 0
         SPREAD_TOO_WIDE = 21
         if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
             msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
