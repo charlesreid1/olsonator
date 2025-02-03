@@ -43,7 +43,7 @@ HOME_ADVANTAGE = 3.09
 # Relative confidence levels 
 # for predictions of this conference
 
-CONFIDENCES = dict(
+SPREAD_CONFIDENCES = dict(
     A10  = 24.9,
     ACC  = 15.6,
     AE   = 29.3,
@@ -75,5 +75,39 @@ CONFIDENCES = dict(
     Sum  = 21.5,
     WAC  = 18.3,
     WCC  = 17.3,
+)
+
+OU_CONFIDENCES = dict(
+    A10  = 10.2,
+    ACC  = 21.3,
+    AE   = 15.1,
+    ASun = 18.5,
+    Amer = 21.3,
+    B10  = 26.8,
+    B12  = 25.6,
+    BE   = 22.7,
+    BSky = 11.7,
+    BSth = 26.8,
+    BW   = 19.8,
+    CAA  = 15.4,
+    CUSA = 18.0,
+    Horz = 8.3,
+    Ivy  = 25.4,
+    MAAC = 26.2,
+    MAC  = 25.7,
+    MEAC = 35.1,
+    MVC  = 22.0,
+    MWC  = 15.7,
+    NEC  = 28.2,
+    OVC  = 26.5,
+    PL   = 14.0,
+    SB   = 22.2,
+    SC   = 12.9,
+    SEC  = 22.0,
+    SWAC = 26.8,
+    Slnd = 11.4,
+    Sum  = 35.6,
+    WAC  = 6.5,
+    WCC  = 18.9,
 )
 

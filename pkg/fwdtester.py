@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from .backtester import Backtester
 from .model import ModelBase
-from .constants import CONFERENCES, CONFIDENCES
+from .constants import CONFERENCES, SPREAD_CONFIDENCES, OU_CONFIDENCES
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import normalize_to_donchess_names
 from .utils import repl
@@ -146,18 +146,27 @@ class Forwardtester(Backtester):
                     elif game['predicted_home_points'] < game['predicted_away_points']:
                         spread = -1*game['predicted_away_spread']
                         dog_spread = f"{game['home_team']} (+{spread})"
+                    total = game['predicted_total']
+                    over_under = f"T: {total}"
 
                     ateam = game['away_team']
                     aconference = CONFERENCES[normalize_to_donchess_names(ateam)]
-                    aconfidence = CONFIDENCES[aconference]
+                    aconfidence = SPREAD_CONFIDENCES[aconference]
 
                     hteam = game['home_team']
                     hconference = CONFERENCES[normalize_to_donchess_names(hteam)]
-                    hconfidence = CONFIDENCES[hconference]
+                    hconfidence = SPREAD_CONFIDENCES[hconference]
 
-                    conf = aconfidence + hconfidence
+                    conf_spread = int((aconfidence + hconfidence)//2)
 
-                    print(f"{matchup:24s}\t{dog_spread:20s}\t{conf}")
+                    #print(f"{matchup:24s}\t{dog_spread:20s}\t{conf_spread}")
+
+                    aouconfidence = OU_CONFIDENCES[aconference]
+                    houconfidence = OU_CONFIDENCES[hconference]
+
+                    conf_ou = int((aouconfidence + houconfidence)//2)
+
+                    print(f"{matchup:24s}\t{dog_spread:20s}\t{conf_spread}\t\t{over_under:8s}\t{conf_ou}")
 
             print("")
             print("")

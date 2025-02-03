@@ -22,7 +22,11 @@ from .teams import (
     donch2teamrankings,
     kenpom2donch,
 )
-from .utils import repl
+from .utils import (
+    repl,
+    pythagorean_win_pct,
+    decimal2american,
+)
 
 
 class Backtester(object):
@@ -349,15 +353,29 @@ class Backtester(object):
                 except (TeamNotFoundException, ModelPredictException):
                     # Note: first few days of season, no off/def data, so no predictions
                     continue
+
+                away_ml_decimal = pythagorean_win_pct(away_points, home_points)
+                away_ml_american = decimal2american(away_ml_decimal)
+                home_ml_american = decimal2american(1-away_ml_decimal)
+
                 item = copy.deepcopy(game)
                 item['predicted_away_points'] = round(away_points,1)
                 item['predicted_home_points'] = round(home_points,1)
+
+                # Spread
                 item['predicted_away_spread'] = round(home_points - away_points, 1)
+
+                # Moneyline
+                item['predicted_away_moneyline'] = away_ml_american
+                item['predicted_home_moneyline'] = home_ml_american
+
+                # Over/under
                 item['predicted_total']       = round(home_points + away_points, 1)
+
                 results.append(item)
 
-        if len(results)==0:
-            raise Exception("No results")
+        if len(results)==0 or len(results)==1:
+            raise Exception("Missing results (length of results: {len(results)})")
 
         fpath = self._get_backtest_fpath_json(test_name)
         with open(fpath, 'w') as f:
@@ -402,90 +420,157 @@ class Backtester(object):
                 tms = "(all)"
             print(f"\tTeams:\t\t\t{tms}")
 
+            # ---------------------------------------------
+            # Loop over all results, and accumulate stats
+
+            # Keep track of error in vegas spread, our spread
             vegas_spread_e = []
             model_spread_e = []
+
+            # Kepe track of o/u error
+            vegas_ou_e = []
+            model_ou_e = []
+
+            # Keep track of wins versus vegas
+            # (our spread is closer to real than vegas)
             model_spread_vsvegas = [0, 0]
+            # (our total is closer to real than vegas)
+            model_ou_vsvegas = [0, 0]
 
             # Keep track of each day's W/L record, so we can compile best/worst
-            oneday_vsvegas = {}
+            oneday_spread_vsvegas = {}
+            oneday_ou_vsvegas = {}
             dates = sorted(list({j['game_date'] for j in results}))
             for date in dates:
-                oneday_vsvegas[date] = [0, 0]
+                oneday_spread_vsvegas[date] = [0, 0]
+                oneday_ou_vsvegas[date] = [0, 0]
 
             for item in results:
 
                 date = item['game_date']
 
+                # Prepare data:
+
+                # Populate real spread if not present
+                if 'away_spread' not in item:
+                    if 'home_score' in item and 'away_score' in item:
+                        item['away_spread'] = item['home_score'] - item['away_score']
+                    else:
+                        # No final score, don't even bother
+                        continue
+
+                # Unpack odds to the top-level numbers we need
                 if 'odds' in item:
                     if 'spread' in item['odds']:
                         if 'vegas_away_spread' in item['odds']['spread']:
                             item['vegas_away_spread'] = item['odds']['spread']['vegas_away_spread']
+                    if 'ou' in item['odds']:
+                        if 'vegas_ou_total' in item['odds']['ou']:
+                            item['vegas_ou_total'] = item['odds']['ou']['vegas_ou_total']
 
-                if 'vegas_away_spread' not in item or item['vegas_away_spread'] is None:
-                    continue
+                # ---------------------------------------------
+                # Assemble spread stats for this item
+                if 'vegas_away_spread' in item and item['vegas_away_spread'] is not None:
 
-                if 'away_spread' not in item:
-                    item['away_spread'] = item['home_score'] - item['away_score']
+                    # Error in spread predictions
+                    e = item['vegas_away_spread'] - item['away_spread']
+                    vegas_spread_e.append(e*e)
 
-                e = item['vegas_away_spread'] - item['away_spread']
-                vegas_spread_e.append(e*e)
+                    f = item['predicted_away_spread'] - item['away_spread']
+                    model_spread_e.append(f*f)
 
-                f = item['predicted_away_spread'] - item['away_spread']
-                model_spread_e.append(f*f)
+                    # Example: real away spread is -10
+                    # vegas says -6
+                    # prediction says -4
+                    # we would have bet against the spread being so high (-), and lost
+                    #
+                    # Example: real away spread is +6
+                    # vegas says +2
+                    # prediction says +4
+                    # we would have bet against the spread being so small (+), and won
+                    #
+                    # If vegas spread is between real and predicted, we lost against vegas
+                    # Another way to check is to see if vegas - real has same sign as vegas - prediction
+                    # If they do have the same sign, they're on the same side of vegas, meaning we won
+                    s1 = item['vegas_away_spread'] - item['predicted_away_spread']
+                    s2 = item['vegas_away_spread'] - item['away_spread']
+                    if (s1>0)==(s2>0):
+                        # Won the bet
+                        model_spread_vsvegas[0] += 1
+                        oneday_spread_vsvegas[date][0] += 1
+                    else:
+                        # Lost the bet
+                        model_spread_vsvegas[1] += 1
+                        oneday_spread_vsvegas[date][1] += 1
 
-                # Example: real away spread is -10
-                # vegas says -6
-                # prediction says -4
-                # we would have bet against the spread being so high (-), and lost
-                #
-                # Example: real away spread is +6
-                # vegas says +2
-                # prediction says +4
-                # we would have bet against the spread being so small (+), and won
-                #
-                # If vegas spread is between real and predicted, we lost against vegas
-                # Another way to check is to see if vegas - real has same sign as vegas - prediction
-                # If they do have the same sign, they're on the same side of vegas, meaning we won
-                s1 = item['vegas_away_spread'] - item['predicted_away_spread']
-                s2 = item['vegas_away_spread'] - item['away_spread']
-                if (s1>0)==(s2>0):
-                    # Won the bet
-                    model_spread_vsvegas[0] += 1
-                    oneday_vsvegas[date][0] += 1
-                else:
-                    # Lost the bet
-                    model_spread_vsvegas[1] += 1
-                    oneday_vsvegas[date][1] += 1
+                # ---------------------------------------------
+                # Assemble O/U stats for this item
+                if 'vegas_ou_total' in item and item['vegas_ou_total'] is not None:
+
+                    real_total = item['away_score'] + item['home_score']
+
+                    # Error in total predictions
+                    e = item['vegas_ou_total'] - real_total
+                    vegas_ou_e.append(e*e)
+
+                    f = item['predicted_total'] - real_total
+                    model_ou_e.append(f*f)
+
+                    # If vegas total is between real total and perdicted total, we lost against vegas
+                    # Check if vegas - real has same sign as predicted - vegas
+                    # If they do have the same sign, they're on the same side of vegas, meaning we won
+                    s1 = item['vegas_ou_total'] - item['predicted_total']
+                    s2 = item['vegas_ou_total'] - real_total
+                    if (s1>0)==(s2>0):
+                        # Won the bet
+                        model_ou_vsvegas[0] += 1
+                        oneday_ou_vsvegas[date][0] += 1
+                    else:
+                        # Lost the bet
+                        model_ou_vsvegas[1] += 1
+                        oneday_ou_vsvegas[date][1] += 1
+
+                # ---------------------------------------------
+                # Assemble moneyline stats for this item
+
+
+            # End loop over all items
+
+
+            ###############################
+            # Spread summary
+
+            print("")
 
             if len(model_spread_e)>0:
                 model_spread_mse = statistics.mean(model_spread_e)
 
                 # Model Spread RMSE
-                print(f"\tModel Spread RMSE:\t{round(math.sqrt(model_spread_mse),1)}")
+                print(f"\t[SPREAD] Model RMSE:\t\t{round(math.sqrt(model_spread_mse),1)}")
 
             if len(vegas_spread_e)>0:
                 vegas_spread_mse = statistics.mean(vegas_spread_e)
 
                 # Vegas Spread RMSE
-                print(f"\tVegas Spread RMSE:\t{round(math.sqrt(vegas_spread_mse),1)}")
+                print(f"\t[SPREAD] Vegas RMSE:\t\t{round(math.sqrt(vegas_spread_mse),1)}")
 
                 # Total games played vs Vegas
-                print(f"\tN games vs Vegas:\t{model_spread_vsvegas[0] + model_spread_vsvegas[1]}")
+                print(f"\t[SPREAD] N games vs Vegas:\t{model_spread_vsvegas[0] + model_spread_vsvegas[1]}")
 
                 win_pct = 100*(model_spread_vsvegas[0]/(model_spread_vsvegas[0] + model_spread_vsvegas[1]))
                 win_pct = round(win_pct, 1)
 
                 # Model Spread W-L vs Vegas
-                print(f"\tW-L vs Vegas:\t\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
+                print(f"\t[SPREAD] W-L vs Vegas:\t\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
 
                 # Win Pct vs Vegas
-                print(f"\tW-L% vs Vegas:\t\t{win_pct}%")
+                print(f"\t[SPREAD] W-L% vs Vegas:\t\t{win_pct}%")
 
                 best_oneday_vsvegas = [0, 0]
                 best_oneday_wpct = 0
                 worst_oneday_vsvegas = [0, 0]
                 worst_oneday_wpct = 1
-                for date, wl in oneday_vsvegas.items():
+                for date, wl in oneday_spread_vsvegas.items():
                     wpct = wl[0]/(wl[0]+wl[1])
                     if wl[0] > best_oneday_vsvegas[0]:
                         best_oneday_vsvegas = wl
@@ -495,8 +580,8 @@ class Backtester(object):
                         worst_oneday_wpct = wpct
 
                 # Best and worst one-day W-L
-                print(f"\tBest 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
-                print(f"\tWorst 1-day W-L:\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
+                print(f"\t[SPREAD] Best 1-day W-L:\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
+                print(f"\t[SPREAD] Worst 1-day W-L:\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
 
                 # ROI vs Vegas (assuming -110 odds for every bet)
                 amount = 110
@@ -506,7 +591,65 @@ class Backtester(object):
                 net = gross - investment
                 roi_110 = 100*(net/investment)
 
-                print(f"\tROI vs Vegas (-110):\t{round(roi_110,1)}%")
+                print(f"\t[SPREAD] ROI vs Vegas (-110):\t{round(roi_110,1)}%")
+
+
+            ###############################
+            # Over/under summary
+
+            print("")
+
+            if len(model_ou_e)>0:
+                model_ou_mse = statistics.mean(model_ou_e)
+
+                # Model RMSE
+                print(f"\t[OU] Model RMSE:\t\t{round(math.sqrt(model_ou_mse),1)}")
+
+            if len(vegas_ou_e)>0:
+                vegas_ou_mse = statistics.mean(vegas_ou_e)
+
+                # Vegas RMSE
+                print(f"\t[OU] Vegas RMSE:\t\t{round(math.sqrt(vegas_ou_mse),1)}")
+
+                # Total games played vs Vegas
+                print(f"\t[OU] N games vs Vegas:\t\t{model_ou_vsvegas[0] + model_ou_vsvegas[1]}")
+
+                win_pct = 100*(model_ou_vsvegas[0]/(model_ou_vsvegas[0] + model_ou_vsvegas[1]))
+                win_pct = round(win_pct, 1)
+
+                # Model o/u W-L vs Vegas
+                print(f"\t[OU] W-L vs Vegas:\t\t{model_ou_vsvegas[0]} - {model_ou_vsvegas[1]}")
+
+                # Win Pct vs Vegas
+                print(f"\t[OU] W-L% vs Vegas:\t\t{win_pct}%")
+
+                best_oneday_vsvegas = [0, 0]
+                best_oneday_wpct = 0
+                worst_oneday_vsvegas = [0, 0]
+                worst_oneday_wpct = 1
+                for date, wl in oneday_spread_vsvegas.items():
+                    wpct = wl[0]/(wl[0]+wl[1])
+                    if wl[0] > best_oneday_vsvegas[0]:
+                        best_oneday_vsvegas = wl
+                        best_oneday_wpct = wpct
+                    if wl[1] > worst_oneday_vsvegas[1]:
+                        worst_oneday_vsvegas = wl
+                        worst_oneday_wpct = wpct
+
+                # Best and worst one-day W-L
+                print(f"\t[OU] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
+                print(f"\t[OU] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
+
+                # ROI vs Vegas (assuming -110 odds for every bet)
+                amount = 110
+                profit = 100
+                investment = sum(model_ou_vsvegas)*amount
+                gross = model_ou_vsvegas[0]*(amount + profit)
+                net = gross - investment
+                roi_110 = 100*(net/investment)
+
+                print(f"\t[OU] ROI vs Vegas (-110):\t{round(roi_110,1)}%")
+
 
             # Table is complete
             print("")
