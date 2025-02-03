@@ -11,6 +11,7 @@ from .model import ModelBase
 from .scraper import (
     TeamRankingsDataScraper,
     TeamRankingsScheduleScraper,
+    KenpomDataScraper,
 )
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import (
@@ -31,6 +32,9 @@ class Backtester(object):
     a reqired start/end date, and an optional team name.
     If
     """
+    ScheduleScraperClass = TeamRankingsScheduleScraper
+    DataScraperClass     = TeamRankingsDataScraper
+
     def __init__(
         self,
         model: ModelBase,
@@ -109,7 +113,7 @@ class Backtester(object):
         """
         schedule_data = []
 
-        ts = TeamRankingsScheduleScraper(self.model_parameters)
+        ss = self.ScheduleScraperClass(self.model_parameters)
 
         for date in self.all_dates:
             today_data = []
@@ -135,7 +139,7 @@ class Backtester(object):
             except FileNotFoundError:
                 if self.nohush:
                     print(f"Missing or incomplete file at {fpath}, creating ourselves")
-                ts.fetch_all(date)
+                ss.fetch_all(date)
 
                 with open(fpath, 'r') as f:
                     today_data = json.load(f)
@@ -291,12 +295,12 @@ class Backtester(object):
         # - (we do not process/handle results here)
         # - (we do not dump anything to files)
 
-        tr = TeamRankingsDataScraper(self.model_parameters)
+        ds = self.DataScraperClass(self.model_parameters)
 
         for this_date in self.all_dates:
             if self.nohush:
                 print(f"Backtester is now scraping data about teams on {this_date}")
-            tr.fetch_all(this_date)
+            ds.fetch_all(this_date)
 
     def backtest(self, test_name):
         """
@@ -496,4 +500,7 @@ class Backtester(object):
         #
         # /spread-movement - page with final vegas spread
         # /box-score - page with final score
+
+class KenpomBacktester(Backtester):
+    DataScraperClass = KenpomDataScraper
 

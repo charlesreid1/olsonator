@@ -8,6 +8,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 
 from .errors import TeamRankingsParseError
+from .teams import kenpom2donch, donch2teamrankings
 
 
 class TeamRankingsDataScraper(object):
@@ -367,7 +368,6 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
             msg = "Could not find over/under odds table"
             raise TeamRankingsParseError(msg)
 
-
         # Format "Total 165.5"
         current, opening_ou = cells[0].text, float(cells[2].text)
         current_ou = float(current.split(" ")[1])
@@ -499,4 +499,66 @@ class TeamRankingsScheduleScraper(TeamRankingsDataScraper):
         # Step 3: Final dump of game info plus odds data
         with open(fpath, 'w') as f:
             json.dump(sched_json, f, indent=4)
+
+
+class KenpomDataScraper(TeamRankingsDataScraper):
+    url = "https://kenpom.com/"
+    data_subdir = 'kenpom'
+
+    def _get_fpath_json(self):
+        """
+        Get the filename + path of the JSON file containing
+        team raning data
+
+        prefix should be a stat name (like tempo)
+        stamp should be a YYYYMMDD datestamp
+        """
+        fname = "kenpom_data.json"
+        dpath = os.path.join(self.model_parameters['data_directory'], 'kenpom')
+        jdatadir = os.path.join(dpath, 'json')
+        fpath = os.path.join(jdatadir, fname)
+        return fpath
+
+    def _html2json(self, html):
+        """Extract data from HTML and send to JSON."""
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # Prep data structure
+        ranking = []
+
+        table = soup.find('table', id='ratings-table')
+        for row in table.find_all('tr'):
+            columns = row.find_all('td')
+            if len(columns)>0:
+                item = {}
+                item['team_rank']  = columns[0].text
+                item['team_name']  = donch2teamrankings(kenpom2donch(columns[1].text))
+                item['net_rating'] = float(columns[4].text)
+                item['off_rating'] = float(columns[5].text)
+                item['def_rating'] = float(columns[7].text)
+                item['adj_tempo']  = float(columns[9].text)
+                item['luck']       = float(columns[11].text)
+                ranking.append(item)
+
+        return ranking
+
+    def fetch_all(self, game_date_dashes, force=False):
+        """
+        For the given date, download corresponding HTML pages with team data,
+        scrape the team data from the page, and export to JSON file.
+        """
+        t = datetime.now()
+        now_date_dashes = t.strftime("%Y-%m-%d")
+        now_date_nodashes = now_date_dashes.replace("-", "")
+
+        fpath = self._get_fpath_json()
+        if (force is True) or (os.path.exists(fpath) is False):
+
+            this_src = self._get_page_html(self.url)
+            this_json = self._html2json(this_src)
+
+            if self.nohush:
+                print(f"Dumping Kenpom team data to {fpath}")
+            with open(fpath, 'w') as f:
+                json.dump(this_json, f)
 
