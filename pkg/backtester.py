@@ -143,7 +143,7 @@ class Backtester(object):
 
                 with open(fpath, 'r') as f:
                     today_data = json.load(f)
-                schedule_data.append(today_data)
+                schedule_data += today_data
 
         return schedule_data
 
@@ -341,12 +341,7 @@ class Backtester(object):
 
         results = []
         for game in schedule_data:
-            try:
-                game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
-            except:
-                # I don't know what's going on, this happens a few times per season
-                game_descr = "BONK"
-                continue
+            game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
             if len(self.teams)==0 or our_team:
                 try:
@@ -402,7 +397,7 @@ class Backtester(object):
 
             # Teams
             if len(self.teams)>0:
-                tms = ", ".join(self.teams)
+                tms = ", ".join(sorted(list(set(self.teams))))
             else:
                 tms = "(all)"
             print(f"\tTeams:\t\t\t{tms}")
