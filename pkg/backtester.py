@@ -11,6 +11,7 @@ from .model import ModelBase
 from .scraper import (
     TeamRankingsDataScraper,
     TeamRankingsScheduleScraper,
+    KenpomDataScraper,
 )
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import (
@@ -31,6 +32,9 @@ class Backtester(object):
     a reqired start/end date, and an optional team name.
     If
     """
+    ScheduleScraperClass = TeamRankingsScheduleScraper
+    DataScraperClass     = TeamRankingsDataScraper
+
     def __init__(
         self,
         model: ModelBase,
@@ -109,7 +113,7 @@ class Backtester(object):
         """
         schedule_data = []
 
-        ts = TeamRankingsScheduleScraper(self.model_parameters)
+        ss = self.ScheduleScraperClass(self.model_parameters)
 
         for date in self.all_dates:
             today_data = []
@@ -135,11 +139,11 @@ class Backtester(object):
             except FileNotFoundError:
                 if self.nohush:
                     print(f"Missing or incomplete file at {fpath}, creating ourselves")
-                ts.fetch_all(date)
+                ss.fetch_all(date)
 
                 with open(fpath, 'r') as f:
                     today_data = json.load(f)
-                schedule_data.append(today_data)
+                schedule_data += today_data
 
         return schedule_data
 
@@ -291,12 +295,12 @@ class Backtester(object):
         # - (we do not process/handle results here)
         # - (we do not dump anything to files)
 
-        tr = TeamRankingsDataScraper(self.model_parameters)
+        ds = self.DataScraperClass(self.model_parameters)
 
         for this_date in self.all_dates:
             if self.nohush:
                 print(f"Backtester is now scraping data about teams on {this_date}")
-            tr.fetch_all(this_date)
+            ds.fetch_all(this_date)
 
     def backtest(self, test_name):
         """
@@ -337,12 +341,7 @@ class Backtester(object):
 
         results = []
         for game in schedule_data:
-            try:
-                game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
-            except:
-                # I don't know what's going on, this happens a few times per season
-                game_descr = "BONK"
-                continue
+            game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
             if len(self.teams)==0 or our_team:
                 try:
@@ -398,7 +397,7 @@ class Backtester(object):
 
             # Teams
             if len(self.teams)>0:
-                tms = ", ".join(self.teams)
+                tms = ", ".join(sorted(list(set(self.teams))))
             else:
                 tms = "(all)"
             print(f"\tTeams:\t\t\t{tms}")
@@ -407,7 +406,15 @@ class Backtester(object):
             model_spread_e = []
             model_spread_vsvegas = [0, 0]
 
+            # Keep track of each day's W/L record, so we can compile best/worst
+            oneday_vsvegas = {}
+            dates = sorted(list({j['game_date'] for j in results}))
+            for date in dates:
+                oneday_vsvegas[date] = [0, 0]
+
             for item in results:
+
+                date = item['game_date']
 
                 if 'odds' in item:
                     if 'spread' in item['odds']:
@@ -444,9 +451,11 @@ class Backtester(object):
                 if (s1>0)==(s2>0):
                     # Won the bet
                     model_spread_vsvegas[0] += 1
+                    oneday_vsvegas[date][0] += 1
                 else:
                     # Lost the bet
                     model_spread_vsvegas[1] += 1
+                    oneday_vsvegas[date][1] += 1
 
             if len(model_spread_e)>0:
                 model_spread_mse = statistics.mean(model_spread_e)
@@ -472,6 +481,23 @@ class Backtester(object):
                 # Win Pct vs Vegas
                 print(f"\tW-L% vs Vegas:\t\t{win_pct}%")
 
+                best_oneday_vsvegas = [0, 0]
+                best_oneday_wpct = 0
+                worst_oneday_vsvegas = [0, 0]
+                worst_oneday_wpct = 1
+                for date, wl in oneday_vsvegas.items():
+                    wpct = wl[0]/(wl[0]+wl[1])
+                    if wl[0] > best_oneday_vsvegas[0]:
+                        best_oneday_vsvegas = wl
+                        best_oneday_wpct = wpct
+                    if wl[1] > worst_oneday_vsvegas[1]:
+                        worst_oneday_vsvegas = wl
+                        worst_oneday_wpct = wpct
+
+                # Best and worst one-day W-L
+                print(f"\tBest 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
+                print(f"\tWorst 1-day W-L:\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
+
                 # ROI vs Vegas (assuming -110 odds for every bet)
                 amount = 110
                 profit = 100
@@ -496,4 +522,7 @@ class Backtester(object):
         #
         # /spread-movement - page with final vegas spread
         # /box-score - page with final score
+
+class KenpomBacktester(Backtester):
+    DataScraperClass = KenpomDataScraper
 

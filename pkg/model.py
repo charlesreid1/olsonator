@@ -326,6 +326,7 @@ class NCAABModel(ModelBase):
         # Part 1 - calculate league average tempo/off/def
         avg_tempo   = self.get_avg_tempo(game_date)
 
+        # TODO: fix this
         away_tempo = self.get_school_tempo(game_parameters, away_team)
         away_tempo_pct_add = self._get_pct_adjustment(away_tempo, avg_tempo)
 
@@ -370,7 +371,7 @@ class NCAABModel(ModelBase):
         e_home_points = e_tempo*(e_home_off_output/100.0)
 
         # Look for too big/too small spreads BEFORE adding modifiers
-        SPREAD_TOO_NARROW = 1
+        SPREAD_TOO_NARROW = 0
         SPREAD_TOO_WIDE = 21
         if abs(e_away_points-e_home_points) < SPREAD_TOO_NARROW:
             msg = f"Error: could not make prediction, spread is too narrow (< {SPREAD_TOO_NARROW})"
@@ -473,3 +474,63 @@ class NCAABModel(ModelBase):
         school_val_pct = 100*school_val/avg_val
         school_val_pct_add = school_val_pct - 100
         return school_val_pct_add
+
+
+class KenpomNCAABModel(NCAABModel):
+
+    def _get_fpath_json(self, prefix, stamp=""):
+        """
+        Get the filename + path of the JSON file containing
+        team raning data
+
+        prefix should be a stat name (like tempo)
+        stamp should be a YYYYMMDD datestamp
+        """
+        fname = "kenpom_data.json"
+        dpath = os.path.join(self.model_parameters['data_directory'], 'kenpom')
+        jdatadir = os.path.join(dpath, 'json')
+        fpath = os.path.join(jdatadir, fname)
+        return fpath
+
+    def _get_school_template_func(self, game_parameters, school, fpath_prefix, dimension):
+        game_date = game_parameters['game_date'].replace("-", "")
+        with open(self._get_fpath_json(fpath_prefix, game_date), 'r') as f:
+            dat = json.load(f)
+        for item in dat:
+            if item[f'team_name']==school:
+                if item[dimension] is not None:
+                    return item[dimension]
+        raise TeamNotFoundException(f"Team {school} on date {game_date} could not be found")
+
+    def get_avg_tempo(self, game_date):
+        """Return the average tempo for entire league"""
+        year = self._get_year(game_date)
+        return self._get_avg_template_func(game_date, "kenpom", f"adj_tempo")
+
+    def get_avg_off_eff(self, game_date):
+        """Return the average offensive efficiency for entire league"""
+        year = self._get_year(game_date)
+        return self._get_avg_template_func(game_date, "kenpom", f"off_rating")/100
+
+    def get_avg_def_eff(self, game_date):
+        """Return the average defensive efficiency for entire league"""
+        year = self._get_year(game_date)
+        return self._get_avg_template_func(game_date, "kenpom", f"def_rating")/100
+
+    def get_school_tempo(self, gp, school):
+        """Return the tempo (posessions) for this school"""
+        game_date = gp['game_date'].replace("-", "")
+        year = self._get_year(game_date)
+        return self._get_school_template_func(gp, school, "kenpom", f"adj_tempo")
+
+    def get_school_off_eff(self, gp, school):
+        """Return the offensive efficiency for this school"""
+        game_date = gp['game_date'].replace("-", "")
+        year = self._get_year(game_date)
+        return self._get_school_template_func(gp, school, "kenpom", f"off_rating")/100
+
+    def get_school_def_eff(self, gp, school):
+        """Return the defensive efficiency for this school"""
+        game_date = gp['game_date'].replace("-", "")
+        year = self._get_year(game_date)
+        return self._get_school_template_func(gp, school, "kenpom", f"def_rating")/100
