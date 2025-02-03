@@ -774,8 +774,8 @@ class Backtester(object):
                 print(f"\t[ML] Best 1-day ROI:\t\t{best}")
                 print(f"\t[ML] Worst 1-day ROI:\t\t{worst}")
 
-                print(f"\t[ML] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]}")
-                print(f"\t[ML] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]}")
+                print(f"\t[ML] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
+                print(f"\t[ML] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
 
                 # ROI vs Vegas
                 total_bets = model_ml_vsvegas[0] + model_ml_vsvegas[1]

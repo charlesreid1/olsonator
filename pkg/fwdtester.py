@@ -9,7 +9,13 @@ from .model import ModelBase
 from .constants import CONFERENCES, SPREAD_CONFIDENCES, OU_CONFIDENCES
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import normalize_to_donchess_names
-from .utils import repl
+from .utils import (
+    repl,
+    pythagorean_win_pct,
+    decimal2american,
+    american2decimal,
+    bet_win_american,
+)
 
 
 class Forwardtester(Backtester):
@@ -91,11 +97,27 @@ class Forwardtester(Backtester):
                 except (TeamNotFoundException, ModelPredictException):
                     # Note: first few days of season, no off/def data, so no predictions
                     continue
+
+                # Ensure this matches backtest() method
+
+                away_ml_decimal = pythagorean_win_pct(away_points, home_points)
+                away_ml_american = decimal2american(away_ml_decimal)
+                home_ml_american = decimal2american(1-away_ml_decimal)
+
                 item = copy.deepcopy(game)
                 item['predicted_away_points'] = round(away_points,1)
                 item['predicted_home_points'] = round(home_points,1)
+
+                # Spread
                 item['predicted_away_spread'] = round(home_points - away_points, 1)
+
+                # Moneyline
+                item['predicted_away_moneyline'] = away_ml_american
+                item['predicted_home_moneyline'] = home_ml_american
+
+                # Over/under
                 item['predicted_total']       = round(home_points + away_points, 1)
+
                 results.append(item)
 
         if len(results)==0:
@@ -140,33 +162,53 @@ class Forwardtester(Backtester):
                 
                     # For each game, print the matchup, and the expected spread for the dog
                     matchup = f"{game['away_team']} @ {game['home_team']}:"
+
+                    ateam = game['away_team']
+                    aconference = CONFERENCES[normalize_to_donchess_names(ateam)]
+
+                    hteam = game['home_team']
+                    hconference = CONFERENCES[normalize_to_donchess_names(hteam)]
+
+                    # dog + spread (+ points needed on the spread for the dog to cover)
                     if game['predicted_away_points'] < game['predicted_home_points']:
                         spread = game['predicted_away_spread']
                         dog_spread = f"{game['away_team']} (+{spread})"
                     elif game['predicted_home_points'] < game['predicted_away_points']:
                         spread = -1*game['predicted_away_spread']
                         dog_spread = f"{game['home_team']} (+{spread})"
+
+                    # confidence in spread
+                    aspconfidence = SPREAD_CONFIDENCES[aconference]
+                    hspconfidence = SPREAD_CONFIDENCES[hconference]
+                    conf_spread = int((aspconfidence + hspconfidence)//2)
+
+                    # o/u
                     total = game['predicted_total']
                     over_under = f"T: {total}"
 
-                    ateam = game['away_team']
-                    aconference = CONFERENCES[normalize_to_donchess_names(ateam)]
-                    aconfidence = SPREAD_CONFIDENCES[aconference]
+                    # confidence in ou
+                    aouconfidence = OU_CONFIDENCES[aconference]
+                    houconfidence = OU_CONFIDENCES[hconference]
+                    conf_ou = int((aouconfidence + houconfidence)//2)
 
-                    hteam = game['home_team']
-                    hconference = CONFERENCES[normalize_to_donchess_names(hteam)]
-                    hconfidence = SPREAD_CONFIDENCES[hconference]
+                    # dog moneyline
+                    away_ml_american = game['predicted_away_moneyline']
+                    home_ml_american = game['predicted_home_moneyline']
 
-                    conf_spread = int((aconfidence + hconfidence)//2)
+                    away_ml_decimal = american2decimal(away_ml_american)
+                    home_ml_decimal = american2decimal(home_ml_american)
+
+                    # confidence in ml
+
+                    if away_ml_decimal < 0.5:
+                        dog_moneyline = f"{game['away_team']} ({away_ml_american})"
+                    elif home_ml_decimal < 0.5:
+                        dog_moneyline = f"{game['home_team']} ({home_ml_american})"
 
                     #print(f"{matchup:24s}\t{dog_spread:20s}\t{conf_spread}")
 
-                    aouconfidence = OU_CONFIDENCES[aconference]
-                    houconfidence = OU_CONFIDENCES[hconference]
-
-                    conf_ou = int((aouconfidence + houconfidence)//2)
-
-                    print(f"{matchup:24s}\t{dog_spread:20s}\t{conf_spread}\t\t{over_under:8s}\t{conf_ou}")
+                    #print(f"{matchup:24s}\t| {dog_moneyline:20s}\t{conf_ml}\t| {dog_spread:20s}\t{conf_spread}\t| {over_under:8s}\t{conf_ou}")
+                    print(f"{matchup:24s}\t| {dog_moneyline:20s}\t| {dog_spread:20s}\t{conf_spread}\t| {over_under:8s}\t{conf_ou}")
 
             print("")
             print("")
