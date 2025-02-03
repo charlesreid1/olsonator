@@ -738,10 +738,13 @@ class Backtester(object):
                 win_pct = 100*(model_ml_vsvegas[0]/(model_ml_vsvegas[0] + model_ml_vsvegas[1]))
                 win_pct = round(win_pct, 1)
 
-                # Model W-L vs Vegas
-                net_dollars = int(model_ml_pl_vsvegas[0] - model_ml_pl_vsvegas[1])
-                print(f"\t[ML] Net $ vs Vegas:\t\t${net_dollars:,}")
+                # Model Spread W-L vs Vegas
+                print(f"\t[ML] W-L vs Vegas:\t\t{model_ml_vsvegas[0]} - {model_ml_vsvegas[1]}")
 
+                # Win Pct vs Vegas
+                print(f"\t[ML] W-L% vs Vegas:\t\t{win_pct}%")
+
+                # Model W-L vs Vegas
                 best_oneday_vsvegas = [0, 0]
                 worst_oneday_vsvegas = [0, 0]
 
@@ -754,40 +757,33 @@ class Backtester(object):
                         worst_oneday_vsvegas = wl
                         worst_oneday_wpct = wpct
 
-                best_oneday_vsvegas_d = 0
-                worst_oneday_vsvegas_d = 10000000000000
+                best_oneday_vsvegas_p = 0
+                worst_oneday_vsvegas_p = 10000000000000
 
-                for date, wl in oneday_ml_pl_vsvegas.items():
-                    net = wl[0] - wl[1]
-                    if net > best_oneday_vsvegas_d:
-                        best_oneday_vsvegas_d = net
-                    if net < worst_oneday_vsvegas_d:
-                        worst_oneday_vsvegas_d = net
+                for i, (date, wl) in enumerate(oneday_ml_pl_vsvegas.items()):
+                    net = (wl[0] - wl[1])/(BET*(oneday_ml_vsvegas[date][0] + oneday_ml_vsvegas[date][1]))
+                    if net > best_oneday_vsvegas_p:
+                        best_oneday_vsvegas_p = net
+                    if net < worst_oneday_vsvegas_p:
+                        worst_oneday_vsvegas_p = net
 
                 # Best and worst one-day W-L
-                best = f"${int(best_oneday_vsvegas_d):,}"
+                best = f"{int(100*best_oneday_vsvegas_p)}%"
+                worst = f"{int(100*worst_oneday_vsvegas_p)}%"
 
-                if worst_oneday_vsvegas_d < 0:
-                    worst = f"-${abs(int(worst_oneday_vsvegas_d)):,}"
-                else:
-                    worst = f"${int(worst_oneday_vsvegas_d):,}"
-
-                print(f"\t[ML] Best 1-day Profit:\t\t{best}")
-                print(f"\t[ML] Worst 1-day Profit:\t{worst}")
+                print(f"\t[ML] Best 1-day ROI:\t\t{best}")
+                print(f"\t[ML] Worst 1-day ROI:\t\t{worst}")
 
                 print(f"\t[ML] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]}")
                 print(f"\t[ML] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]}")
 
-                ### # ROI vs Vegas
-                ### amount = 110
-                ### profit = 100
-                ### investment = sum(model_ml_vsvegas)*amount
-                ### gross = model_ml_vsvegas[0]*(amount + profit)
-                ### net = gross - investment
-                ### roi_110 = 100*(net/investment)
+                # ROI vs Vegas
+                total_bets = model_ml_vsvegas[0] + model_ml_vsvegas[1]
+                bet_dollars = total_bets*BET
+                net_dollars = int(model_ml_pl_vsvegas[0] - model_ml_pl_vsvegas[1])
+                roi = 100*(net_dollars/bet_dollars)
 
-                ### print(f"\t[ML] ROI vs Vegas (-110):\t{round(roi_110,1)}%")
-
+                print(f"\t[ML] ROI vs Vegas (-110):\t{round(roi_110,1)}%")
 
             # Table is complete
             print("")
