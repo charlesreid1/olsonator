@@ -6,7 +6,12 @@ from datetime import datetime, timedelta
 
 from .backtester import Backtester
 from .model import ModelBase
-from .constants import CONFERENCES, SPREAD_CONFIDENCES, OU_CONFIDENCES
+from .constants import (
+    CONFERENCES, 
+    SPREAD_CONFIDENCES, 
+    OU_CONFIDENCES,
+    ML_CONFIDENCES,
+)
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import normalize_to_donchess_names
 from .utils import (
@@ -199,6 +204,11 @@ class Forwardtester(Backtester):
                     home_ml_decimal = american2decimal(home_ml_american)
 
                     # confidence in ml
+                    amlconfidence = ML_CONFIDENCES[aconference]
+                    hmlconfidence = ML_CONFIDENCES[hconference]
+                    conf_ml = int((amlconfidence + hmlconfidence)//2)
+
+                    # confidence in ml
 
                     if away_ml_decimal < 0.5:
                         dog_moneyline = f"{game['away_team']} ({away_ml_american})"
@@ -206,9 +216,8 @@ class Forwardtester(Backtester):
                         dog_moneyline = f"{game['home_team']} ({home_ml_american})"
 
                     #print(f"{matchup:24s}\t{dog_spread:20s}\t{conf_spread}")
-
                     #print(f"{matchup:24s}\t| {dog_moneyline:20s}\t{conf_ml}\t| {dog_spread:20s}\t{conf_spread}\t| {over_under:8s}\t{conf_ou}")
-                    print(f"{matchup:24s}\t| {dog_moneyline:20s}\t| {dog_spread:20s}\t{conf_spread}\t| {over_under:8s}\t{conf_ou}")
+                    print(f"{matchup:24s}\t| {dog_moneyline:20s}\t{conf_ml}\t| {dog_spread:20s}\t{conf_spread}\t| {over_under:8s}\t{conf_ou}")
 
             print("")
             print("")
