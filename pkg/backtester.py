@@ -621,10 +621,7 @@ class Backtester(object):
                 win_pct = round(win_pct, 1)
 
                 # Model Spread W-L vs Vegas
-                print(f"\t[SPREAD] W-L vs Vegas:\t\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]}")
-
-                # Win Pct vs Vegas
-                print(f"\t[SPREAD] W-L% vs Vegas:\t\t{win_pct}%")
+                print(f"\t[SPREAD] W-L vs Vegas:\t\t{model_spread_vsvegas[0]} - {model_spread_vsvegas[1]} ({round(win_pct,1)}%)")
 
                 best_oneday_vsvegas = [0, 0]
                 best_oneday_wpct = 0
@@ -640,8 +637,8 @@ class Backtester(object):
                         worst_oneday_wpct = wpct
 
                 # Best and worst one-day W-L
-                print(f"\t[SPREAD] Best 1-day W-L:\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
-                print(f"\t[SPREAD] Worst 1-day W-L:\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
+                print(f"\t[SPREAD] Best 1-day W-L:\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({round(100*best_oneday_wpct, 1)}%)")
+                print(f"\t[SPREAD] Worst 1-day W-L:\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({round(100*worst_oneday_wpct, 1)}%)")
 
                 # ROI vs Vegas (assuming -110 odds for every bet)
                 amount = 110
@@ -680,10 +677,7 @@ class Backtester(object):
                 win_pct = round(win_pct, 1)
 
                 # Model o/u W-L vs Vegas
-                print(f"\t[OU] W-L vs Vegas:\t\t{model_ou_vsvegas[0]} - {model_ou_vsvegas[1]}")
-
-                # Win Pct vs Vegas
-                print(f"\t[OU] W-L% vs Vegas:\t\t{win_pct}%")
+                print(f"\t[OU] W-L vs Vegas:\t\t{model_ou_vsvegas[0]} - {model_ou_vsvegas[1]} ({round(win_pct,1)}%)")
 
                 best_oneday_vsvegas = [0, 0]
                 best_oneday_wpct = 0
@@ -699,8 +693,8 @@ class Backtester(object):
                         worst_oneday_wpct = wpct
 
                 # Best and worst one-day W-L
-                print(f"\t[OU] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
-                print(f"\t[OU] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
+                print(f"\t[OU] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({round(100*best_oneday_wpct, 1)}%)")
+                print(f"\t[OU] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({round(100*worst_oneday_wpct, 1)}%)")
 
                 # ROI vs Vegas (assuming -110 odds for every bet)
                 amount = 110
@@ -739,16 +733,15 @@ class Backtester(object):
                 win_pct = round(win_pct, 1)
 
                 # Model Spread W-L vs Vegas
-                print(f"\t[ML] W-L vs Vegas:\t\t{model_ml_vsvegas[0]} - {model_ml_vsvegas[1]}")
-
-                # Win Pct vs Vegas
-                print(f"\t[ML] W-L% vs Vegas:\t\t{win_pct}%")
+                print(f"\t[ML] W-L vs Vegas:\t\t{model_ml_vsvegas[0]} - {model_ml_vsvegas[1]} ({round(win_pct, 1)}%)")
 
                 # Model W-L vs Vegas
                 best_oneday_vsvegas = [0, 0]
                 worst_oneday_vsvegas = [0, 0]
 
                 for date, wl in oneday_ml_vsvegas.items():
+                    if (wl[0]+wl[1])==0:
+                        continue
                     wpct = wl[0]/(wl[0]+wl[1])
                     if wl[0] > best_oneday_vsvegas[0]:
                         best_oneday_vsvegas = wl
@@ -761,21 +754,24 @@ class Backtester(object):
                 worst_oneday_vsvegas_p = 10000000000000
 
                 for i, (date, wl) in enumerate(oneday_ml_pl_vsvegas.items()):
-                    net = (wl[0] - wl[1])/(BET*(oneday_ml_vsvegas[date][0] + oneday_ml_vsvegas[date][1]))
+                    tot_bets = oneday_ml_vsvegas[date][0] + oneday_ml_vsvegas[date][1]
+                    if tot_bets == 0:
+                        continue
+                    net = (wl[0] - wl[1])/(BET*tot_bets)
                     if net > best_oneday_vsvegas_p:
                         best_oneday_vsvegas_p = net
                     if net < worst_oneday_vsvegas_p:
                         worst_oneday_vsvegas_p = net
 
                 # Best and worst one-day W-L
-                best = f"{int(100*best_oneday_vsvegas_p)}%"
-                worst = f"{int(100*worst_oneday_vsvegas_p)}%"
+                best = f"{round(100*best_oneday_vsvegas_p, 1)}%"
+                worst = f"{round(100*worst_oneday_vsvegas_p, 1)}%"
 
                 print(f"\t[ML] Best 1-day ROI:\t\t{best}")
                 print(f"\t[ML] Worst 1-day ROI:\t\t{worst}")
 
-                print(f"\t[ML] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({int(100*best_oneday_wpct)}%)")
-                print(f"\t[ML] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({int(100*worst_oneday_wpct)}%)")
+                print(f"\t[ML] Best 1-day W-L:\t\t{best_oneday_vsvegas[0]} - {best_oneday_vsvegas[1]} ({round(100*best_oneday_wpct, 1)}%)")
+                print(f"\t[ML] Worst 1-day W-L:\t\t{worst_oneday_vsvegas[0]} - {worst_oneday_vsvegas[1]} ({round(100*worst_oneday_wpct, 1)}%)")
 
                 # ROI vs Vegas
                 total_bets = model_ml_vsvegas[0] + model_ml_vsvegas[1]
@@ -783,7 +779,7 @@ class Backtester(object):
                 net_dollars = int(model_ml_pl_vsvegas[0] - model_ml_pl_vsvegas[1])
                 roi = 100*(net_dollars/bet_dollars)
 
-                print(f"\t[ML] ROI vs Vegas (-110):\t{round(roi_110,1)}%")
+                print(f"\t[ML] ROI vs Vegas:\t\t{round(roi,1)}%")
 
             # Table is complete
             print("")
