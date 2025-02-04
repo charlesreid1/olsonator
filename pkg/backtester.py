@@ -12,6 +12,7 @@ from .scraper import (
     TeamRankingsDataScraper,
     TeamRankingsScheduleScraper,
     KenpomDataScraper,
+    EspnScheduleScraper,
 )
 from .errors import TeamNotFoundException, ModelPredictException
 from .teams import (
@@ -36,10 +37,10 @@ class Backtester(object):
     Class that manages the entire backtesting process.
     This takes as input a model to backtest,
     a reqired start/end date, and an optional team name.
-    If
     """
-    ScheduleScraperClass = TeamRankingsScheduleScraper
-    DataScraperClass     = TeamRankingsDataScraper
+    DataScraperClass         = TeamRankingsDataScraper
+    ScheduleScraperClass     = TeamRankingsScheduleScraper
+    DeepScheduleScraperClass = EspnScheduleScraper
 
     def __init__(
         self,
@@ -69,15 +70,22 @@ class Backtester(object):
         self.start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
         self.end_date = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%d")
 
+        now_dt   = datetime.now()
         start_dt = datetime.strptime(self.start_date, "%Y-%m-%d")
         end_dt   = datetime.strptime(self.end_date,   "%Y-%m-%d")
+
+        assert start_dt < now_dt
+        assert end_dt < now_dt
+        assert start_dt < end_dt
 
         # Assemble the list of dates we are scraping
         self.all_dates = []
         counter_dt = start_dt
         while counter_dt <= end_dt:
             this_date = counter_dt.strftime("%Y-%m-%d")
-            self.all_dates.append(this_date)
+            # This should only include a handful of days where there are no games...
+            if this_date.month < 4 or this_date.month > 10:
+                self.all_dates.append(this_date)
             counter_dt += timedelta(days=1)
 
         # If user wants, they can provide a list of teams
@@ -119,14 +127,31 @@ class Backtester(object):
         """
         schedule_data = []
 
-        ss = self.ScheduleScraperClass(self.model_parameters)
-
         for date in self.all_dates:
             today_data = []
             date_nodashes = date.replace("-", "")
             fpath = self._get_schedule_fpath_json(date_nodashes)
+            dt = datetime.strptime(date, "%Y-%m-%d")
+            now_dt = datetime.now()
 
-            # Try to load 
+            # Determine if this date goes back more than 1 year, if so use a deep scraper
+            ss = None
+            if now_dt.month > 10:
+                if dt.month > 10 and dt.year == now_dt.year:
+                    # Only asking for data from this season (this year)
+                    ss = self.ScheduleScraperClass(self.model_parameters)
+                else:
+                    # Asking for data from > 1 season ago
+                    ss = self.DeepScheduleScraperClass(self.model_parameters)
+            else:
+                if dt.month > 10 and dt.year == now_dt.year-1:
+                    # Only asking for data from this season (last year)
+                    ss = self.ScheduleScraperClass(self.model_parameters)
+                else:
+                    # Asking for data from > 1 season ago
+                    ss = self.DeepScheduleScraperClass(self.model_parameters)
+
+            # Try to load
             try:
                 if self.nohush:
                     print(f"Loading schedule data from {fpath}")
