@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import requests
 from selenium import webdriver
 from bs4 import BeautifulSoup
+import cbbpy.mens_scraper as CbbpyScraper
 
 from .errors import TeamRankingsParseError
 from .teams import kenpom2donch, donch2teamrankings
@@ -51,7 +52,7 @@ class TeamRankingsDataScraper(object):
         return fpath
 
     def _get_page_html(self, url):
-        # If we try to use requests, none of the tables load, and all data is None
+        # If we try to use requests for teamrankings data, none of the tables load, and all data is None
         return self._get_page_html_selenium(url)
 
     def _get_page_html_requests(self, url):
@@ -571,4 +572,188 @@ class KenpomDataScraper(TeamRankingsDataScraper):
                 print(f"Dumping Kenpom team data to {fpath}")
             with open(fpath, 'w') as f:
                 json.dump(this_json, f)
+
+
+class EspnScheduleScraper(TeamRankingsScheduleScraper):
+
+    def _get_schedule_fpath_json(self, stamp):
+        """
+        Get the filename + path of the JSON file where we are
+        storing all of the data scraped from this date's ESPN page
+
+        stamp should be a YYYYMMDD datestamp
+        """
+        fname = "espnschedule_" + stamp + ".json"
+        fpath = os.path.join(self.jdatadir, fname)
+        return fpath
+
+    def _get_page_html(self, url):
+        # Use requests
+        return self._get_page_html_requests(url)
+
+    def _html2json(self, src):
+        pass
+
+    def fetch_all(self, game_date_dashes, force=False):
+        """
+        For the given date, download corresponding HTML pages with schedule data,
+        scrape the schedule data from the page, and export to JSON file.
+        ESPN scraper uses NCAAB API (via Cbbpy) to get game IDs,
+        then assembles ESPN links using the game ID.
+        """
+        def _flatten(inputd):
+            d = {}
+            for k,v in inputd.items():
+                k0 = list(v.keys())[0]
+                d[k] = v[k0]
+            return d
+
+        dt = datetime.strptime(game_date_dashes, "%Y-%m-%d")
+
+        # ----------------------
+        # Step 1: Get daily schedule, compile game info plus links to each game
+        today_data = []
+        fpath = self._get_schedule_fpath_json(date)
+        try:
+            if self.nohush:
+                print(f"Loading schedule data from {fpath}")
+            with open(fpath, 'r') as f:
+                today_data = json.load(f)
+        except json.decoder.JSONDecodeError:
+            print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
+        except FileNotFoundError:
+            print(f"No file at {fpath}, creating ourselves")
+            # Call the NCAA API,
+            # Receive the resulting JSON,
+            # transform into a format our program likes,
+            # Stash to a JSON file on disk
+            gameids = CbbpyScraper.get_game_ids(date)
+
+            # Now that we have this, we can assemble link to espn page:
+            # https://www.espn.com/mens-college-basketball/game/_/gameId/401721400
+            for gameid in gameids:
+
+                espn_link = f"https://www.espn.com/mens-college-basketball/game/_/gameId/{gameid}"
+                src = self._get_page_html(espn_link)
+                this_json = self._html2json(this_src)
+
+
+
+
+
+
+
+    '''
+        schedule_data = []
+
+
+        # Do this one day at a time for efficiency
+        for date in self.all_dates:
+            today_data = []
+            fpath = self._get_schedule_fpath_json(date)
+            try:
+                if self.nohush:
+                    print(f"Loading schedule data from {fpath}")
+                with open(fpath, 'r') as f:
+                    today_data = json.load(f)
+            except json.decoder.JSONDecodeError:
+                print(f"Invalid JSON file at {fpath}, try removing the file and re-running")
+
+            except FileNotFoundError:
+                print(f"No file at {fpath}, creating ourselves")
+                # Call the NCAA API,
+                # Receive the resulting JSON,
+                # transform into a format our program likes,
+                # Stash to a JSON file on disk
+                gameids = CbbpyScraper.get_game_ids(date)
+
+                today_data = []
+                for gameid in gameids:
+                    (game_info, _, _) = CbbpyScraper.get_game(gameid, box=False, pbp=False)
+                    game_info = _flatten(game_info.to_dict())
+
+                    if self.nohush:
+                        print(f"Now on {game_info['away_team']} @ {game_info['home_team']} ({game_info['game_day']})")
+
+                    # game_id                       401708334
+                    # game_status                       Final
+                    # home_team             Kentucky Wildcats
+                    # home_id                              96
+                    # home_rank                             8
+                    # home_record                        14-4
+                    # home_score                           97
+                    # away_team          Alabama Crimson Tide
+                    # away_id                             333
+                    # away_rank                             4
+                    # away_record                        15-3
+                    # away_score                          102
+                    # home_point_spread                  -2.5
+                    # home_win                          False
+                    # num_ots                               0
+                    # is_conference                      True
+                    # is_neutral                        False
+                    # is_postseason                     False
+                    # tournament
+                    # game_day               January 18, 2025
+                    # game_time                  09:00 AM PST
+                    # game_loc                  Lexington, KY
+                    # arena                        Rupp Arena
+                    # arena_capacity                      NaN
+                    # attendance                      21108.0
+                    # tv_network                         ESPN
+                    # referee_1                 Patrick Evans
+                    # referee_2               Steven Anderson
+                    # referee_3                   Joe Lindsay
+
+                    olsonator_game = {}
+
+                    # NCAA API uses January D, YYYY as the game day format
+                    olsonator_game['game_date'] = datetime.strptime(game_info['game_day'], "%B %d, %Y").strftime("%Y-%m-%d")
+
+                    # NCAA API uses 09:00 AM PST as the game time format
+                    t = game_info['game_time'].split(" ")[0]
+                    h, m = t.split(":")
+                    game_time = int(h + m)
+                    if 'PM' in game_info['game_time']:
+                        game_time += 1200
+                    olsonator_game['game_time'] = game_time
+
+                    olsonator_game['vegas_away_spread'] = None
+                    try:
+                        away_spread = -1.0*float(game_info['home_point_spread'])
+                        olsonator_game['vegas_away_spread'] = away_spread
+                    except (KeyError, ValueError):
+                        if self.nohush:
+                            print(f"No Vegas spread info for {game_info['away_team']} @ {game_info['home_team']} ({game_info['game_day']})")
+
+                    olsonator_game['neutral_site'] = game_info['is_neutral']
+                    olsonator_game['is_conference'] = game_info['is_conference']
+
+                    olsonator_game['away_rank'] = game_info['away_rank']
+                    olsonator_game['home_rank'] = game_info['home_rank']
+
+                    # The NCAA API introduces a whole new set of names (includes mascot)
+                    try:
+                        olsonator_game['away_team'] = normalize_to_teamrankings_names(game_info['away_team'])
+                        olsonator_game['home_team'] = normalize_to_teamrankings_names(game_info['home_team'])
+                    except TeamNotFoundException:
+                        continue
+
+                    olsonator_game['away_points'] = game_info['away_score']
+                    olsonator_game['home_points'] = game_info['home_score']
+                    olsonator_game['away_spread'] = game_info['home_score'] - game_info['away_score']
+                    olsonator_game['total']       = game_info['away_score'] + game_info['home_score']
+
+                    today_data.append(olsonator_game)
+
+                fpath = self._get_schedule_fpath_json(date)
+                with open(fpath, 'w') as f:
+                    json.dump(today_data, f, indent=4, ignore_nan=True)
+                if self.nohush:
+                    print(f"Schedule data has been dumped to file {fpath}")
+
+            schedule_data += today_data
+
+        return schedule_data
+    '''
 
