@@ -73,9 +73,9 @@ class Backtester(object):
         start_dt = datetime.strptime(self.start_date, "%Y-%m-%d")
         end_dt   = datetime.strptime(self.end_date,   "%Y-%m-%d")
 
-        assert start_dt < now_dt
-        assert end_dt < now_dt
-        assert start_dt < end_dt
+        assert start_dt <= now_dt
+        assert end_dt <= now_dt
+        assert start_dt <= end_dt
 
         # Assemble the list of dates we are scraping
         self.all_dates = []
@@ -83,7 +83,7 @@ class Backtester(object):
         while counter_dt <= end_dt:
             this_date = counter_dt.strftime("%Y-%m-%d")
             # This should only include a handful of days where there are no games...
-            if this_date.month < 4 or this_date.month > 10:
+            if counter_dt.month < 4 or counter_dt.month > 10:
                 self.all_dates.append(this_date)
             counter_dt += timedelta(days=1)
 
@@ -135,20 +135,14 @@ class Backtester(object):
 
             # Determine if this date goes back more than 1 year, if so use a deep scraper
             ss = None
-            if now_dt.month > 10:
-                if dt.month > 10 and dt.year == now_dt.year:
-                    # Only asking for data from this season (this year)
-                    ss = self.ScheduleScraperClass(self.model_parameters)
-                else:
-                    # Asking for data from > 1 season ago
-                    ss = self.DeepScheduleScraperClass(self.model_parameters)
+            td1 = now_dt - dt
+            td2 = timedelta(days=300)
+            if td1 > td2:
+                # Asking for data from > 1 season ago
+                ss = self.DeepScheduleScraperClass(self.model_parameters)
             else:
-                if dt.month > 10 and dt.year == now_dt.year-1:
-                    # Only asking for data from this season (last year)
-                    ss = self.ScheduleScraperClass(self.model_parameters)
-                else:
-                    # Asking for data from > 1 season ago
-                    ss = self.DeepScheduleScraperClass(self.model_parameters)
+                # Only asking for data from this season (this year)
+                ss = self.ScheduleScraperClass(self.model_parameters)
 
             # Try to load
             try:
@@ -524,10 +518,10 @@ class Backtester(object):
                 worst_oneday_wpct = 1
                 for date, wl in oneday_spread_vsvegas.items():
                     wpct = wl[0]/(wl[0]+wl[1])
-                    if wl[0] > best_oneday_vsvegas[0]:
+                    if wl[0] > best_oneday_vsvegas[0] and wl[0] > wl[1]:
                         best_oneday_vsvegas = wl
                         best_oneday_wpct = wpct
-                    if wl[1] > worst_oneday_vsvegas[1]:
+                    if wl[1] > worst_oneday_vsvegas[1] and wl[1] > wl[0]:
                         worst_oneday_vsvegas = wl
                         worst_oneday_wpct = wpct
 
@@ -580,10 +574,10 @@ class Backtester(object):
                 worst_oneday_wpct = 1
                 for date, wl in oneday_ou_vsvegas.items():
                     wpct = wl[0]/(wl[0]+wl[1])
-                    if wl[0] > best_oneday_vsvegas[0]:
+                    if wl[0] > best_oneday_vsvegas[0] and wl[0] > wl[1]:
                         best_oneday_vsvegas = wl
                         best_oneday_wpct = wpct
-                    if wl[1] > worst_oneday_vsvegas[1]:
+                    if wl[1] > worst_oneday_vsvegas[1] and wl[1] > wl[0]:
                         worst_oneday_vsvegas = wl
                         worst_oneday_wpct = wpct
 
@@ -638,10 +632,10 @@ class Backtester(object):
                     if (wl[0]+wl[1])==0:
                         continue
                     wpct = wl[0]/(wl[0]+wl[1])
-                    if wl[0] > best_oneday_vsvegas[0]:
+                    if wl[0] > best_oneday_vsvegas[0] and wl[0] > wl[1]:
                         best_oneday_vsvegas = wl
                         best_oneday_wpct = wpct
-                    if wl[1] > worst_oneday_vsvegas[1]:
+                    if wl[1] > worst_oneday_vsvegas[1] and wl[1] > wl[0]:
                         worst_oneday_vsvegas = wl
                         worst_oneday_wpct = wpct
 
