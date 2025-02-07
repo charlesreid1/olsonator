@@ -609,11 +609,12 @@ class EspnScheduleScraper(TeamRankingsScheduleScraper):
             return d
 
         dt = datetime.strptime(game_date_dashes, "%Y-%m-%d")
+        game_date_nodashes = dt.strftime("%Y%m%d")
 
         # ----------------------
         # Step 1: Get daily schedule, compile game info plus links to each game
         today_data = []
-        fpath = self._get_schedule_fpath_json(date)
+        fpath = self._get_schedule_fpath_json(game_date_nodashes)
         try:
             if self.nohush:
                 print(f"Loading schedule data from {fpath}")
@@ -627,7 +628,7 @@ class EspnScheduleScraper(TeamRankingsScheduleScraper):
             # Receive the resulting JSON,
             # transform into a format our program likes,
             # Stash to a JSON file on disk
-            gameids = CbbpyScraper.get_game_ids(date)
+            gameids = CbbpyScraper.get_game_ids(game_date_dashes)
 
             # Now that we have this, we can assemble link to espn page:
             # https://www.espn.com/mens-college-basketball/game/_/gameId/401721400
@@ -635,12 +636,7 @@ class EspnScheduleScraper(TeamRankingsScheduleScraper):
 
                 espn_link = f"https://www.espn.com/mens-college-basketball/game/_/gameId/{gameid}"
                 src = self._get_page_html(espn_link)
-                this_json = self._html2json(this_src)
-
-
-
-
-
+                #this_json = self._html2json(this_src)
 
 
     '''
