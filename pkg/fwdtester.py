@@ -96,6 +96,7 @@ class Forwardtester(Backtester):
         for game in schedule_data:
             game_descr = f"{game['away_team']} @ {game['home_team']} ({game['game_date']})"
             our_team = game['home_team'] in self.teams or game['away_team'] in self.teams
+
             if len(self.teams)==0 or our_team:
                 try:
                     away_points, home_points = model.predict(game)
@@ -181,6 +182,8 @@ class Forwardtester(Backtester):
                     elif game['predicted_home_points'] < game['predicted_away_points']:
                         spread = -1*game['predicted_away_spread']
                         dog_spread = f"{game['home_team']} (+{spread})"
+                    else:
+                        dog_spread = f"(pick)"
 
                     # confidence in spread
                     aspconfidence = SPREAD_CONFIDENCES[aconference]
@@ -214,6 +217,8 @@ class Forwardtester(Backtester):
                         dog_moneyline = f"{game['away_team']} ({away_ml_american})"
                     elif home_ml_decimal < 0.5:
                         dog_moneyline = f"{game['home_team']} ({home_ml_american})"
+                    else:
+                        dog_moneyline = f"(pick)"
 
                     #print(f"{matchup:24s}\t{dog_spread:20s}\t{conf_spread}")
                     #print(f"{matchup:24s}\t| {dog_moneyline:20s}\t{conf_ml}\t| {dog_spread:20s}\t{conf_spread}\t| {over_under:8s}\t{conf_ou}")
