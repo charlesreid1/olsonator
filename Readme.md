@@ -17,12 +17,12 @@ data about possessions, offense, and defense. It uses
 baskeball API and obtain schedule and spread odds data.
 
 Here is an example of the output of a backtest. Note that this
-backtest utilizes 39 days and 1,482 games' worth of data,
+backtest utilizes 90 days and 3,700 games' worth of data,
 and takes < 30 seconds to run (not including one-time processing
 cost of downloading and extracting schedule data from the web,
 which will be cached on disk for any subsequent run):
 
-![Backtest output example](img/backtest_example_output.png)
+![Backtest output example](img/backtest_example_output2.png)
 
 ## Quick Start
 
